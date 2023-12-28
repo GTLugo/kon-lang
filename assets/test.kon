@@ -1,0 +1,18 @@
+// number
+// string
+
+main: () {
+  std.terminal.print_line(foo());
+}
+
+foo: (a: i32) -> string {
+  x := 5;
+  array := std.array<i32>.new();
+
+  y: i32 = a;
+  arr: std.fixed_array<i32, 5> = std.fixed_array.new();
+
+  arr[4] = 5;
+
+  "hi, friends!"
+}

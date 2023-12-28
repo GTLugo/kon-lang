@@ -1,0 +1,54 @@
+### ENV ###
+
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+CARGO_MAKE_RUN_TARGET = "kon"
+
+[env.development]
+BUILD_TYPE = "debug"
+
+[env.release]
+BUILD_TYPE = "release"
+
+[config]
+skip_core_tasks = true
+
+[tasks.default]
+workspace = false
+alias = "build"
+
+### BUILD ###
+
+[tasks.build]
+workspace = false
+command = "cargo"
+args = ["build"]
+dependencies = ["copy-resources"]
+
+[tasks.build-release]
+workspace = false
+command = "cargo"
+args = ["build", "--release"]
+dependencies = ["copy-resources"]
+
+### OTHER ###
+
+[tasks.copy-resources]
+workspace = false
+condition = { files_modified = { input = ["${CARGO_MAKE_WORKING_DIRECTORY}/Cargo.toml", "./${CARGO_MAKE_RUN_TARGET}/assets/**/*"], output = ["./target/${BUILD_TYPE}/assets/**/*"] } }
+script_runner = "@shell"
+windows.script = '''
+  xcopy "./assets" "./target/${BUILD_TYPE}/assets/" /Efu /Y
+'''
+script = '''
+  cp -rfu ./assets ./target/${BUILD_TYPE}/assets/
+'''
+dependencies = ["delete-resources"]
+
+[tasks.delete-resources]
+workspace = false
+condition = { files_exist = ["./target/${BUILD_TYPE}/assets"] }
+script_runner = "@shell"
+script = '''
+  rm -rf ./target/${BUILD_TYPE}/assets
+'''

@@ -1,0 +1,7 @@
+// KON Lang by Gabriel Lugo
+
+34 + 69 // This is a comment
+
+main: () -> i32 { 
+  0
+}
