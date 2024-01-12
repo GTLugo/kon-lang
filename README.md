@@ -1,0 +1,1 @@
+A repository containing an early interpreter (and eventually compiler) for Kon.
