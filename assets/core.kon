@@ -1,0 +1,5 @@
+pub include bool::bool::{self, false, true};
+pub include array::{array, fixed_array};
+
+SUCCESS: pub const i32 = 0;
+FAILURE: pub const i32 = 1;

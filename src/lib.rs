@@ -1,4 +1,4 @@
 #![feature(let_chains)]
 
 pub mod error;
-pub mod compiler;
+pub mod interpreter;

@@ -1,0 +1,19 @@
+fixed_array<T>: pub type {
+
+}
+
+fixed_array<T>: impl {
+  new: pub () -> Self {
+
+  }
+}
+
+array<T>: pub type {
+
+}
+
+array<T>: impl {
+  new: pub () -> Self {
+
+  }
+}

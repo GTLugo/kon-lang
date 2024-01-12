@@ -1,0 +1,11 @@
+public include core.*;
+
+bool: enum {
+  false,
+  true,
+}
+
+main: () -> i32 {
+  x := logic.true;
+  0
+}
