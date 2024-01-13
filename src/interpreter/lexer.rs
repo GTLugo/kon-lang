@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
-use crate::error::InterpreterError;
+use crate::error::error_handler::ErrorHandler;
+use crate::error::LexerError;
 use crate::interpreter::token::Token;
 
 use super::character_provider::CharacterProvider;
@@ -38,12 +39,12 @@ impl Lexer {
         }
     }
 
-    pub fn scan(&mut self, location: &str, source: &str) -> Result<VecDeque<Token>, Vec<InterpreterError>> {
-        let mut errors = Vec::default();
+    pub fn scan(&mut self, location: &str, source: &str) -> Result<VecDeque<Token>, ErrorHandler> {
+        let mut error_handler = ErrorHandler::new();
         let mut characters = CharacterProvider::new(source);
 
         let mut tokens = VecDeque::default();
-        while let Some(token) = self.build_token(location, &mut characters, &mut errors) {
+        while let Some(token) = self.build_token(location, &mut characters, &mut error_handler) {
             tokens.push_back(token);
         }
         
@@ -52,14 +53,14 @@ impl Lexer {
             column: characters.current_column(),
         });
 
-        if errors.is_empty() {
-            Ok(tokens)
+        if error_handler.had_error() {
+            Err(error_handler)
         } else {
-            Err(errors)
+            Ok(tokens)
         }
     }
 
-    fn build_token(&self, location: &str, characters: &mut CharacterProvider, errors: &mut Vec<InterpreterError>) -> Option<Token> {
+    fn build_token(&self, location: &str, characters: &mut CharacterProvider, error_handler: &mut ErrorHandler) -> Option<Token> {
         let next_character = characters.next()?;
         let mut lexeme = String::new();
         match next_character {
@@ -96,16 +97,12 @@ impl Lexer {
                         lexeme,
                     })
                 } else {
-                    let error = InterpreterError::SyntaxError {
+                    error_handler.lexing_error(LexerError::SyntaxError {
                         location: location.into(),
                         line: characters.current_line(),
                         column: characters.current_column(),
                         message: "Failed to parse number".into(),
-                    };
-            
-                    errors.push(error.clone());
-            
-                    Some(Token::Invalid { error })
+                    })
                 }
             }
             symbol if symbol.is_ascii_punctuation() => {
@@ -281,41 +278,29 @@ impl Lexer {
                         }
 
                         
-                        let error = InterpreterError::UnterminatedString {
+                        error_handler.lexing_error(LexerError::UnterminatedString {
                             location: location.into(),
                             line: characters.current_line(),
                             column: characters.current_column(),
-                        };
-                
-                        errors.push(error.clone());
-                
-                        Some(Token::Invalid { error })
+                        })
                     }
                     c => {
-                        let error = InterpreterError::UnknownToken {
+                        error_handler.lexing_error(LexerError::UnknownToken {
                             location: location.into(),
                             line: characters.current_line(),
                             column: characters.current_column(),
                             token: c.into(),
-                        };
-                
-                        errors.push(error.clone());
-                
-                        Some(Token::Invalid { error })
+                        })
                     },
                 }
             }
             c => {
-                let error = InterpreterError::UnknownToken {
+                error_handler.lexing_error(LexerError::UnknownToken {
                     location: location.into(),
                     line: characters.current_line(),
                     column: characters.current_column(),
                     token: c.into(),
-                };
-        
-                errors.push(error.clone());
-        
-                Some(Token::Invalid { error })
+                })
             },
         }
     }

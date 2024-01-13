@@ -2,7 +2,6 @@ use std::{fs, io::Write, ffi::OsStr};
 
 use clap::Parser;
 use kon::{error::KonError, interpreter::Interpreter};
-use tracing::*;
 
 use self::cli::Cli;
 
@@ -10,28 +9,15 @@ mod cli;
 mod log;
 
 fn main() -> Result<(), KonError> {
-    log::init_max();
-
-    const NAME: &str = env!("CARGO_PKG_NAME");
-    const VERSION: &str = env!("CARGO_PKG_VERSION");
-    info!("{NAME}: {VERSION}");
+    log::init_max_debug();
 
     let cli = Cli::parse();
 
-    let result = if cli.mode.interactive {
+    if cli.mode.interactive {
         run_prompt()
     } else {
         run_file(cli)
-    };
-
-    result.map_err(|error| {
-        if let KonError::InterpreterErrors(errors) = &error {
-            for error in errors {
-                error.report();
-            }
-        }
-        error
-    })
+    }
 }
 
 fn run_file(flags: Cli) -> Result<(), KonError> {
@@ -42,10 +28,6 @@ fn run_file(flags: Cli) -> Result<(), KonError> {
         let source = fs::read_to_string(file)?;
 
         interpreter.run(name, source)?;
-        // if let Err(error) = interpreter.run(source) {
-        //     error.report();
-        //     return Err(error);
-        // }
     }
 
     Ok(())
@@ -61,11 +43,10 @@ fn run_prompt() -> Result<(), KonError> {
         std::io::stdin().read_line(&mut buffer)?;
 
         // Evaluate
-        if let Err(KonError::InterpreterErrors(errors)) = interpreter.run("stdio".into(), buffer) {
-            for error in &errors {
-                error.report();
+        if let Err(error) = interpreter.run("stdio".into(), buffer) {
+            if let KonError::InterpreterErrors(..) = error {
+                println!("{}", error); 
             }
-            println!("{}", KonError::InterpreterErrors(errors)); // report errors without quitting for interactive mode
         };
 
         // Print

@@ -2,10 +2,14 @@ use std::{fmt::Debug, io};
 use strum::EnumDiscriminants;
 use thiserror::Error;
 
+use self::error_handler::ErrorHandler;
+
+pub mod error_handler;
+
 #[derive(Error, EnumDiscriminants)]
 pub enum KonError {
-    #[error("interpreter caught {} error(s)", .0.len())]
-    InterpreterErrors(Vec<InterpreterError>),
+    #[error("interpreter caught {} error(s)", .0.errors().len())]
+    InterpreterErrors(ErrorHandler),
     #[error("{0}")]
     IOError(#[from] io::Error),
     #[error("{0}")]
@@ -23,7 +27,7 @@ impl Debug for KonError {
 }
 
 #[derive(Error, Debug, EnumDiscriminants, Clone)]
-pub enum InterpreterError {
+pub enum LexerError {
     #[error("Unknown token `{token}` at {location} ({line}, {column})")]
     UnknownToken {
         line: u32,
@@ -46,8 +50,8 @@ pub enum InterpreterError {
     },
 }
 
-impl InterpreterError {
-    pub fn id(&self) -> InterpreterErrorDiscriminants {
+impl LexerError {
+    pub fn id(&self) -> LexerErrorDiscriminants {
         self.into()
     }
 

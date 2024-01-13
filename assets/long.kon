@@ -1,0 +1,72 @@
+// Kon Lang by Gabriel Lugo
+
+// core
+//
+// bool: public enum { // yes, bool is an enum
+//   false,
+//   true,
+// }
+// fixed_array<T>: pub type {
+// 
+// }
+// 
+// fixed_array<T>: impl {
+//   new: pub () -> Self {
+// 
+//   }
+// }
+// 
+// array<T>: pub type {
+// 
+// }
+// 
+// array<T>: impl {
+//   new: pub () -> Self {
+// 
+//   }
+// }
+
+include core; // this would be unecessary since it would be done by default
+
+main: () -> i32 {
+    x := 10;
+    x /= 2;
+  core.terminal.print_line(foo(4));
+
+    if x == 5 {
+        
+    } else {
+        
+    }
+
+  oshi := Vtuber.new("FUWAMOCO");
+  oshi.greet();
+
+  return core.SUCCESS
+}
+
+foo: (a: i32) -> core.string {
+  x := 5;
+  array := core.array<i32>.new();
+
+  y: i32 = a;
+  arr: core.fixed_array<i32, 5> = core.fixed_array.new();
+
+  arr[4] = 5;
+
+  "hi, friends!"
+}
+
+Vtuber: type {
+  name: core.string;
+
+  new: pub (name: core.string) -> Vtuber {
+    Vtuber {
+      name
+    }
+  }
+
+  greet: pub (self: &Vtuber) -> () {
+    core.terminal.print_line("BAU BAU");
+  }
+}

@@ -1,6 +1,6 @@
 public include core.*;
 
-bool: enum {
+logic: enum {
   false,
   true,
 }

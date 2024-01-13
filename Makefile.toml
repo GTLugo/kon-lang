@@ -3,6 +3,7 @@
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 CARGO_MAKE_RUN_TARGET = "kon"
+ASSET_FOLDER_LOCATION = "./assets"
 
 [env.development]
 BUILD_TYPE = "debug"
@@ -35,13 +36,13 @@ dependencies = ["copy-resources"]
 
 [tasks.copy-resources]
 workspace = false
-condition = { files_modified = { input = ["${CARGO_MAKE_WORKING_DIRECTORY}/Cargo.toml", "./${CARGO_MAKE_RUN_TARGET}/assets/**/*"], output = ["./target/${BUILD_TYPE}/assets/**/*"] } }
+condition = { files_modified = { input = ["${CARGO_MAKE_WORKING_DIRECTORY}/Cargo.toml", "${CARGO_MAKE_WORKING_DIRECTORY}/Makefile.toml", "${ASSET_FOLDER_LOCATION}/**/*"], output = ["./target/${BUILD_TYPE}/assets/**/*"] } }
 script_runner = "@shell"
 windows.script = '''
-  xcopy "./assets" "./target/${BUILD_TYPE}/assets/" /Efu /Y
+  xcopy "${ASSET_FOLDER_LOCATION}" "./target/${BUILD_TYPE}/assets/" /e /y /i
 '''
 script = '''
-  cp -rfu ./assets ./target/${BUILD_TYPE}/assets/
+  cp -rfu ${ASSET_FOLDER_LOCATION} ./target/${BUILD_TYPE}/assets/
 '''
 dependencies = ["delete-resources"]
 
