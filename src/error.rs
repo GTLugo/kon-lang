@@ -2,14 +2,12 @@ use std::{fmt::Debug, io};
 use strum::EnumDiscriminants;
 use thiserror::Error;
 
-use self::error_handler::ErrorHandler;
-
 pub mod error_handler;
 
 #[derive(Error, EnumDiscriminants)]
 pub enum KonError {
-    #[error("interpreter caught {} error(s)", .0.errors().len())]
-    InterpreterErrors(ErrorHandler),
+    #[error("lexer caught {} error(s)", .0.len())]
+    LexerErrors(Vec<InterpreterError>),
     #[error("{0}")]
     IOError(#[from] io::Error),
     #[error("{0}")]
@@ -27,7 +25,7 @@ impl Debug for KonError {
 }
 
 #[derive(Error, Debug, EnumDiscriminants, Clone)]
-pub enum LexerError {
+pub enum InterpreterError {
     #[error("Unknown token `{token}` at {location} ({line}, {column})")]
     UnknownToken {
         line: u32,
@@ -50,8 +48,8 @@ pub enum LexerError {
     },
 }
 
-impl LexerError {
-    pub fn id(&self) -> LexerErrorDiscriminants {
+impl InterpreterError {
+    pub fn id(&self) -> InterpreterErrorDiscriminants {
         self.into()
     }
 
@@ -61,26 +59,5 @@ impl LexerError {
 
     pub fn report_string(&self) -> String {
         format!("{}", self)
-        // match self {
-        //     InterpreterError::UnknownToken {
-        //         location,
-        //         line,
-        //         column,
-        //         token,
-        //     } => format!("{:?} at {location}({line}:{column}) `{token}`", self.id()),
-        //     InterpreterError::SyntaxError {
-        //         location,
-        //         line,
-        //         column,
-        //         message,
-        //     } => format!(
-        //         "{:?} at {location} ({line}:{column}) `{message}`",
-        //         self.id()
-        //     ),
-        //     InterpreterError::UnterminatedString { line, column, location } => format!(
-        //         "{:?} at {location} ({line}:{column})",
-        //         self.id()
-        //     ),
-        // }
     }
 }

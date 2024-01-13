@@ -1,9 +1,7 @@
-use crate::interpreter::token::Token;
-
-use super::LexerError;
+use super::{InterpreterError, KonError};
 
 pub struct ErrorHandler {
-    errors: Vec<LexerError>,
+    errors: Vec<InterpreterError>,
 }
 
 impl Default for ErrorHandler {
@@ -15,33 +13,34 @@ impl Default for ErrorHandler {
 impl ErrorHandler {
     pub fn new() -> Self {
         Self {
-            errors: Default::default()
+            errors: Default::default(),
         }
     }
 
-    pub fn lexing_error(&mut self, error: LexerError) -> Option<Token> {
+    pub fn push(&mut self, error: InterpreterError) {
         self.errors.push(error.clone());
-
-        Some(Token::Invalid { error })
-    }
-
-    pub fn parsing_error(&mut self, error: LexerError) -> Token {
-        self.errors.push(error.clone());
-
-        Token::Invalid { error }
     }
 
     pub fn had_error(&self) -> bool {
         !self.errors.is_empty()
     }
 
-    pub fn errors(&self) -> &[LexerError] {
+    pub fn errors(&self) -> &[InterpreterError] {
         &self.errors
     }
 
-    pub fn report_errors(&self) {
+    pub fn report_errors(&self) -> KonError {
         for error in &self.errors {
             error.report();
+        }
+        return KonError::LexerErrors(self.errors().to_vec())
+    }
+
+    pub fn try_report_errors(&self) -> Result<(), KonError> {
+        if self.had_error() {
+            Err(self.report_errors())
+        } else {
+            Ok(())
         }
     }
 }

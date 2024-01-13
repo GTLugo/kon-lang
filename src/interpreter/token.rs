@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use strum::EnumDiscriminants;
 
-use crate::error::LexerError;
+use crate::error::InterpreterError;
 
 #[derive(Debug, EnumDiscriminants)]
 pub enum Token {
@@ -268,7 +268,7 @@ pub enum Token {
     },
 
     Invalid {
-        error: LexerError,
+        error: InterpreterError,
     },
 }
 
@@ -597,7 +597,7 @@ impl TokenDiscriminants {
             TokenDiscriminants::EndOfFile => Token::EndOfFile { line, column },
 
             TokenDiscriminants::Invalid => Token::Invalid {
-                error: LexerError::UnknownToken {
+                error: InterpreterError::UnknownToken {
                     line,
                     column,
                     location: "".into(),

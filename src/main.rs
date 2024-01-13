@@ -44,7 +44,7 @@ fn run_prompt() -> Result<(), KonError> {
 
         // Evaluate
         if let Err(error) = interpreter.run("stdio".into(), buffer) {
-            if let KonError::InterpreterErrors(..) = error {
+            if let KonError::LexerErrors(..) = error {
                 println!("{}", error); 
             }
         };

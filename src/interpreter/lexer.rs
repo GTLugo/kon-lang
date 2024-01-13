@@ -1,7 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
 use crate::error::error_handler::ErrorHandler;
-use crate::error::LexerError;
+use crate::error::InterpreterError;
 use crate::interpreter::token::Token;
 
 use super::character_provider::CharacterProvider;
@@ -39,12 +39,14 @@ impl Lexer {
         }
     }
 
-    pub fn scan(&mut self, location: &str, source: &str) -> Result<VecDeque<Token>, ErrorHandler> {
-        let mut error_handler = ErrorHandler::new();
+    pub fn scan(&mut self, location: &str, source: &str, error_handler: &mut ErrorHandler) -> VecDeque<Token> {
         let mut characters = CharacterProvider::new(source);
 
         let mut tokens = VecDeque::default();
-        while let Some(token) = self.build_token(location, &mut characters, &mut error_handler) {
+        while let Some(token) = self.build_token(location, &mut characters) {
+            if let Token::Invalid { error } = &token {
+                error_handler.push(error.clone());
+            }
             tokens.push_back(token);
         }
         
@@ -53,14 +55,10 @@ impl Lexer {
             column: characters.current_column(),
         });
 
-        if error_handler.had_error() {
-            Err(error_handler)
-        } else {
-            Ok(tokens)
-        }
+        tokens
     }
 
-    fn build_token(&self, location: &str, characters: &mut CharacterProvider, error_handler: &mut ErrorHandler) -> Option<Token> {
+    fn build_token(&mut self, location: &str, characters: &mut CharacterProvider) -> Option<Token> {
         let next_character = characters.next()?;
         let mut lexeme = String::new();
         match next_character {
@@ -97,12 +95,12 @@ impl Lexer {
                         lexeme,
                     })
                 } else {
-                    error_handler.lexing_error(LexerError::SyntaxError {
+                    Some(Token::Invalid { error: InterpreterError::SyntaxError {
                         location: location.into(),
                         line: characters.current_line(),
                         column: characters.current_column(),
                         message: "Failed to parse number".into(),
-                    })
+                    } })
                 }
             }
             symbol if symbol.is_ascii_punctuation() => {
@@ -278,29 +276,29 @@ impl Lexer {
                         }
 
                         
-                        error_handler.lexing_error(LexerError::UnterminatedString {
+                        Some(Token::Invalid { error: InterpreterError::UnterminatedString {
                             location: location.into(),
                             line: characters.current_line(),
                             column: characters.current_column(),
-                        })
+                        } })
                     }
                     c => {
-                        error_handler.lexing_error(LexerError::UnknownToken {
+                        Some(Token::Invalid { error: InterpreterError::UnknownToken {
                             location: location.into(),
                             line: characters.current_line(),
                             column: characters.current_column(),
                             token: c.into(),
-                        })
+                        } })
                     },
                 }
             }
             c => {
-                error_handler.lexing_error(LexerError::UnknownToken {
+                Some(Token::Invalid { error: InterpreterError::UnknownToken {
                     location: location.into(),
                     line: characters.current_line(),
                     column: characters.current_column(),
                     token: c.into(),
-                })
+                } })
             },
         }
     }
