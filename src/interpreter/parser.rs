@@ -22,9 +22,7 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn new(error_handler: &'a mut ErrorHandler) -> Self {
-        Self {
-            error_handler,
-        }
+        Self { error_handler }
     }
 
     pub fn parse(&mut self, tokens: &[Token]) -> Expression {

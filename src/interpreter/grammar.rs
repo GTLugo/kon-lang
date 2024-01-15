@@ -2,7 +2,7 @@ use std::any::Any;
 
 use crate::error::InterpreterError;
 
-use super::token::{Token, Literal, Symbol};
+use super::token::{Literal, Symbol, Token};
 
 #[derive(Debug)]
 pub enum Expression {
@@ -27,20 +27,18 @@ pub enum Expression {
 impl Expression {
     pub fn evaluate(&self) -> Result<Box<dyn Any>, InterpreterError> {
         match self {
-            Expression::Literal { token } => {
-                match token {
-                    Token::Literal { literal, .. } => match literal.clone() {
-                        Literal::Void => Ok(Box::new(())),
-                        Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
-                        Literal::String { lexeme } => Ok(Box::new(lexeme)),
-                        Literal::Number { lexeme } => Ok(Box::new(lexeme)),
-                    }
-                    _ => unreachable!("only literals should enter this branch"),
-                }
-            }
+            Expression::Literal { token } => match token {
+                Token::Literal { literal, .. } => match literal.clone() {
+                    Literal::Void => Ok(Box::new(())),
+                    Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
+                    Literal::String { lexeme } => Ok(Box::new(lexeme)),
+                    Literal::Number { lexeme } => Ok(Box::new(lexeme)),
+                },
+                _ => unreachable!("only literals should enter this branch"),
+            },
             Expression::Unary { operator, operand } => {
                 let operator_symbol = match operator {
-                    Token::Symbol {  symbol, .. } => symbol.clone(),
+                    Token::Symbol { symbol, .. } => symbol.clone(),
                     _ => unreachable!("only symbols should enter this branch"),
                 };
 
@@ -49,20 +47,23 @@ impl Expression {
                 if let Some(&value) = value.downcast_ref::<f64>() {
                     return match operator_symbol {
                         Symbol::Minus => Ok(Box::new(-value)),
-                        _ => Err(InterpreterError::SyntaxError { 
-                            line: operator.line(), 
-                            column: operator.column(), 
-                            message: format!("cannot perform `{}` on f64", operator_symbol.lexeme())
+                        _ => Err(InterpreterError::SyntaxError {
+                            line: operator.line(),
+                            column: operator.column(),
+                            message: format!(
+                                "cannot perform `{}` on f64",
+                                operator_symbol.lexeme()
+                            ),
                         }),
-                    }
+                    };
                 }
 
                 if value.downcast_ref::<String>().is_some() {
-                    return Err(InterpreterError::SyntaxError { 
-                        line: operator.line(), 
-                        column: operator.column(), 
-                        message: format!("cannot perform `{}` on string", operator_symbol.lexeme())
-                    })
+                    return Err(InterpreterError::SyntaxError {
+                        line: operator.line(),
+                        column: operator.column(),
+                        message: format!("cannot perform `{}` on string", operator_symbol.lexeme()),
+                    });
                 }
 
                 Err(InterpreterError::Unspecified)
@@ -80,40 +81,48 @@ impl Expression {
                 let left_value = left_operand.evaluate()?;
                 let right_value = right_operand.evaluate()?;
 
-                if let (Some(left), Some(right)) = (left_value.downcast_ref::<f64>(), right_value.downcast_ref::<f64>()) {
+                if let (Some(left), Some(right)) = (
+                    left_value.downcast_ref::<f64>(),
+                    right_value.downcast_ref::<f64>(),
+                ) {
                     return match operator_symbol {
                         Symbol::Plus => Ok(Box::new(left + right)),
                         Symbol::Minus => Ok(Box::new(left - right)),
                         Symbol::Asterisk => Ok(Box::new(left * right)),
                         Symbol::ForwardSlash => Ok(Box::new(left + right)),
                         Symbol::Caret => Ok(Box::new(left.powf(*right))),
-                        _ => Err(InterpreterError::SyntaxError { 
-                            line: operator.line(), 
-                            column: operator.column(), 
-                            message: format!("cannot perform `{}` on f64", operator_symbol.lexeme())
+                        _ => Err(InterpreterError::SyntaxError {
+                            line: operator.line(),
+                            column: operator.column(),
+                            message: format!(
+                                "cannot perform `{}` on f64",
+                                operator_symbol.lexeme()
+                            ),
                         }),
-                    }
+                    };
                 }
 
-                if let (Some(left), Some(right)) = (left_value.downcast_ref::<String>(), right_value.downcast_ref::<String>()) {
+                if let (Some(left), Some(right)) = (
+                    left_value.downcast_ref::<String>(),
+                    right_value.downcast_ref::<String>(),
+                ) {
                     return match operator_symbol {
                         Symbol::Plus => Ok(Box::new(format!("{left}{right}"))),
-                        _ => Err(InterpreterError::SyntaxError { 
-                            line: operator.line(), 
-                            column: operator.column(), 
-                            message: format!("cannot perform `{}` on f64", operator_symbol.lexeme())
+                        _ => Err(InterpreterError::SyntaxError {
+                            line: operator.line(),
+                            column: operator.column(),
+                            message: format!(
+                                "cannot perform `{}` on f64",
+                                operator_symbol.lexeme()
+                            ),
                         }),
-                    }
+                    };
                 }
 
                 Err(InterpreterError::Unspecified)
             }
-            Expression::Grouping { operand } => {
-                operand.evaluate()
-            }
-            Expression::Invalid => {
-                Err(InterpreterError::Unspecified)
-            }
+            Expression::Grouping { operand } => operand.evaluate(),
+            Expression::Invalid => Err(InterpreterError::Unspecified),
         }
     }
 }

@@ -60,7 +60,7 @@ fn run_prompt() -> Result<(), KonError> {
 }
 
 fn print_prompt() -> Result<(), KonError> {
-    print!("> ");
+    print!("❯ ");
     std::io::stdout().flush()?;
 
     Ok(())
