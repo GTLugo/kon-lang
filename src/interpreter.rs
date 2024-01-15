@@ -19,17 +19,20 @@ impl Interpreter {
 
     pub fn run(&mut self, source: String) -> Result<(), KonError> {
         let mut error_handler = ErrorHandler::new();
-        let mut lexer = Lexer::new();
 
-        let tokens = lexer.scan(&source, &mut error_handler);
+        let tokens = {
+            let mut lexer = Lexer::new();
+            lexer.scan(&source, &mut error_handler)
+        };
 
         // for token in &tokens {
         //     tracing::debug!("{token:?}");
         // }
 
-        let mut parser = Parser::new(&mut error_handler);
-
-        let expression = parser.parse(&tokens);
+        let expression = {
+            let mut parser = Parser::new(&mut error_handler);
+            parser.parse(&tokens)
+        };
 
         println!("{expression:#?}");
 
