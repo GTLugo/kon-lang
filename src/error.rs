@@ -58,6 +58,8 @@ pub enum InterpreterError {
         column: u32,
         delimiter: String,
     },
+    #[error("Unspecified error")]
+    Unspecified,
 }
 
 impl InterpreterError {

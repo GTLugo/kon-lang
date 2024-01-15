@@ -34,9 +34,17 @@ impl Interpreter {
             parser.parse(&tokens)
         };
 
-        println!("{expression:#?}");
+        // println!("{expression:#?}");
 
         error_handler.try_report_errors()?;
+
+        if let Ok(result) = expression.evaluate() {
+            if let Some(&value) = result.downcast_ref::<f64>() {
+                println!("{value}");
+            }
+        } else {
+            println!("Invalid");
+        }
 
         Ok(())
     }

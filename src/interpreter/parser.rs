@@ -6,7 +6,7 @@ use super::{
     token_provider::{Next, TokenProvider},
 };
 
-macro_rules! matches_token {
+macro_rules! match_next_token {
     ($tokens:expr, $pattern:pat) => {{
         if let Next::Token($pattern) = $tokens.peek() {
             true
@@ -42,7 +42,7 @@ impl<'a> Parser<'a> {
     fn equality(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
         let mut expression = self.comparison(tokens)?;
 
-        while matches_token!(
+        while match_next_token!(
             tokens,
             Token::Symbol {
                 symbol: Symbol::DoubleEquals | Symbol::ExclamationPointEquals,
@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
     fn comparison(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
         let mut expression = self.term(tokens)?;
 
-        while matches_token!(
+        while match_next_token!(
             tokens,
             Token::Symbol {
                 symbol: Symbol::LeftAngledBracket
@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
     fn term(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
         let mut expression = self.factor(tokens)?;
 
-        while matches_token!(
+        while match_next_token!(
             tokens,
             Token::Symbol {
                 symbol: Symbol::Plus | Symbol::Minus,
@@ -114,7 +114,7 @@ impl<'a> Parser<'a> {
     fn factor(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
         let mut expression = self.unary(tokens)?;
 
-        while matches_token!(
+        while match_next_token!(
             tokens,
             Token::Symbol {
                 symbol: Symbol::Asterisk | Symbol::ForwardSlash,
@@ -135,7 +135,7 @@ impl<'a> Parser<'a> {
     }
 
     fn unary(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
-        if matches_token!(
+        if match_next_token!(
             tokens,
             Token::Symbol {
                 symbol: Symbol::ExclamationPoint | Symbol::Minus,
