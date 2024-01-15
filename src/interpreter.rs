@@ -42,6 +42,10 @@ impl Interpreter {
             if let Some(&value) = result.downcast_ref::<f64>() {
                 println!("{value}");
             }
+
+            if let Some(value) = result.downcast_ref::<String>() {
+                println!("{value}");
+            }
         } else {
             println!("Invalid");
         }
