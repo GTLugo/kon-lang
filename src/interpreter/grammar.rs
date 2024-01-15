@@ -86,6 +86,7 @@ impl Expression {
                         Symbol::Minus => Ok(Box::new(left - right)),
                         Symbol::Asterisk => Ok(Box::new(left * right)),
                         Symbol::ForwardSlash => Ok(Box::new(left + right)),
+                        Symbol::Caret => Ok(Box::new(left.powf(*right))),
                         _ => Err(InterpreterError::SyntaxError { 
                             line: operator.line(), 
                             column: operator.column(), 

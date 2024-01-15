@@ -212,6 +212,21 @@ impl Lexer {
                             })
                         };
                     }
+                    '^' => {
+                        return if Self::next_char_is(characters, '=') {
+                            Some(Token::Symbol {
+                                line: characters.current_line(),
+                                column: characters.current_column(),
+                                symbol: Symbol::CaretEquals,
+                            })
+                        } else {
+                            Some(Token::Symbol {
+                                line: characters.current_line(),
+                                column: characters.current_column(),
+                                symbol: Symbol::Caret,
+                            })
+                        };
+                    }
                     '&' => {
                         return if Self::next_char_is(characters, '=') {
                             Some(Token::Symbol {

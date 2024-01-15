@@ -112,12 +112,35 @@ impl<'a> Parser<'a> {
     }
 
     fn factor(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
-        let mut expression = self.unary(tokens)?;
+        let mut expression = self.power(tokens)?;
 
         while match_next_token!(
             tokens,
             Token::Symbol {
                 symbol: Symbol::Asterisk | Symbol::ForwardSlash,
+                ..
+            }
+        ) {
+            if let Next::Token(operator) = tokens.next().cloned() {
+                let right_operand = Box::new(self.power(tokens)?);
+                expression = Expression::Binary {
+                    left_operand: Box::new(expression),
+                    operator,
+                    right_operand,
+                };
+            }
+        }
+
+        Ok(expression)
+    }
+
+    fn power(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
+        let mut expression = self.unary(tokens)?;
+
+        while match_next_token!(
+            tokens,
+            Token::Symbol {
+                symbol: Symbol::Caret,
                 ..
             }
         ) {
