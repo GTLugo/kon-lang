@@ -1,5 +1,3 @@
-use tracing::debug;
-
 use crate::error::{error_handler::ErrorHandler, KonError};
 
 use self::{lexer::Lexer, parser::Parser};
@@ -25,9 +23,9 @@ impl Interpreter {
 
         let tokens = lexer.scan(&source, &mut error_handler);
 
-        for token in &tokens {
-            debug!("{token:?}");
-        }
+        // for token in &tokens {
+        //     tracing::debug!("{token:?}");
+        // }
 
         let mut parser = Parser::new(&mut error_handler);
 

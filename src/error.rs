@@ -52,7 +52,7 @@ pub enum InterpreterError {
         column: u32,
         message: String,
     },
-    #[error("Expected `{delimiter}` at ({line}, {column})")]
+    #[error("Expected `{delimiter}` or expression at ({line}, {column})")]
     UnmatchedDelimiter {
         line: u32,
         column: u32,
