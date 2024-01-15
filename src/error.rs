@@ -6,8 +6,8 @@ pub mod error_handler;
 
 #[derive(Error, EnumDiscriminants)]
 pub enum KonError {
-    #[error("lexer caught {} error(s)", .0.len())]
-    LexerErrors(Vec<InterpreterError>),
+    #[error("interpreter caught {} error(s)", .0.len())]
+    InterpreterErrors(Vec<InterpreterError>),
     #[error("{0}")]
     IOError(#[from] io::Error),
     #[error("{0}")]
@@ -26,25 +26,37 @@ impl Debug for KonError {
 
 #[derive(Error, Debug, EnumDiscriminants, Clone)]
 pub enum InterpreterError {
-    #[error("Unknown token `{token}` at {location} ({line}, {column})")]
+    #[error("Unknown token `{token}` at ({line}, {column})")]
     UnknownToken {
         line: u32,
         column: u32,
-        location: String,
         token: String,
     },
-    #[error("Syntax error `{message}` at {location} ({line}, {column})")]
+    #[error("Syntax error `{message}` at ({line}, {column})")]
     SyntaxError {
         line: u32,
         column: u32,
-        location: String,
         message: String,
     },
-    #[error("Unterminated string at {location} ({line}, {column})")]
-    UnterminatedString {
+    #[error("Unterminated string at ({line}, {column})")]
+    UnterminatedString { line: u32, column: u32 },
+    #[error("Parsing error `{message}` at ({line}, {column})")]
+    ParseError {
         line: u32,
         column: u32,
-        location: String,
+        message: String,
+    },
+    #[error("End of file error `{message}` at ({line}, {column})")]
+    EOFError {
+        line: u32,
+        column: u32,
+        message: String,
+    },
+    #[error("Expected `{delimiter}` at ({line}, {column})")]
+    UnmatchedDelimiter {
+        line: u32,
+        column: u32,
+        delimiter: String,
     },
 }
 

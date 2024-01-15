@@ -33,7 +33,7 @@ impl ErrorHandler {
         for error in &self.errors {
             error.report();
         }
-        return KonError::LexerErrors(self.errors().to_vec())
+        return KonError::InterpreterErrors(self.errors().to_vec());
     }
 
     pub fn try_report_errors(&self) -> Result<(), KonError> {

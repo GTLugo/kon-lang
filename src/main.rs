@@ -1,4 +1,4 @@
-use std::{fs, io::Write, ffi::OsStr};
+use std::{fs, io::Write};
 
 use clap::Parser;
 use kon::{error::KonError, interpreter::Interpreter};
@@ -22,12 +22,16 @@ fn main() -> Result<(), KonError> {
 
 fn run_file(flags: Cli) -> Result<(), KonError> {
     if let Some(file) = flags.mode.file {
-        let name = file.file_name().unwrap_or(OsStr::new("file")).to_string_lossy().to_string();
+        // let name = file
+        //     .file_name()
+        //     .unwrap_or(std::ffi::OsStr::new("file"))
+        //     .to_string_lossy()
+        //     .to_string();
         let mut interpreter = Interpreter::new();
 
         let source = fs::read_to_string(file)?;
 
-        interpreter.run(name, source)?;
+        interpreter.run(source)?;
     }
 
     Ok(())
@@ -43,9 +47,9 @@ fn run_prompt() -> Result<(), KonError> {
         std::io::stdin().read_line(&mut buffer)?;
 
         // Evaluate
-        if let Err(error) = interpreter.run("stdio".into(), buffer) {
-            if let KonError::LexerErrors(..) = error {
-                println!("{}", error); 
+        if let Err(error) = interpreter.run(buffer) {
+            if let KonError::InterpreterErrors(..) = error {
+                println!("{}", error);
             }
         };
 

@@ -1,36 +1,41 @@
 use tracing::debug;
 
-use crate::error::{KonError, error_handler::ErrorHandler};
+use crate::error::{error_handler::ErrorHandler, KonError};
 
-use self::lexer::Lexer;
+use self::{lexer::Lexer, parser::Parser};
 
 mod character_provider;
 mod grammar;
 pub mod lexer;
 pub mod parser;
 pub mod token;
+mod token_provider;
 
 #[derive(Default)]
-pub struct Interpreter {
-
-}
+pub struct Interpreter {}
 
 impl Interpreter {
     pub fn new() -> Interpreter {
         Self {}
     }
 
-    pub fn run(&mut self, source_name: String, source: String) -> Result<(), KonError> {
+    pub fn run(&mut self, source: String) -> Result<(), KonError> {
         let mut error_handler = ErrorHandler::new();
         let mut lexer = Lexer::new();
 
-        let tokens = lexer.scan(&source_name, &source, &mut error_handler);
+        let tokens = lexer.scan(&source, &mut error_handler);
 
-        error_handler.try_report_errors()?;
-        
-        for token in tokens.iter() {
+        for token in &tokens {
             debug!("{token:?}");
         }
+
+        let mut parser = Parser::new(&mut error_handler);
+
+        let expression = parser.parse(&tokens);
+
+        println!("{expression:#?}");
+
+        error_handler.try_report_errors()?;
 
         Ok(())
     }

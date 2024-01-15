@@ -1,7 +1,8 @@
 // Kon Lang by Gabriel Lugo
 
-include core
+// include core;
 
-main: () -> i32 {
-  return 0;
-}
+// entry: () -> void = {
+    
+// }
+(1 + 2) * 3

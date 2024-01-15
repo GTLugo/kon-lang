@@ -59,7 +59,7 @@ impl<'a> CharacterProvider<'a> {
                         self.line += 1;
                         self.column = 0;
                     } else {
-                        break Some(ch)
+                        break Some(ch);
                     }
                 }
                 '/' => {
