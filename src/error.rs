@@ -24,7 +24,7 @@ impl Debug for KonError {
     }
 }
 
-#[derive(Error, Debug, EnumDiscriminants, Clone)]
+#[derive(Error, Debug, EnumDiscriminants, Clone, PartialEq, Eq)]
 pub enum InterpreterError {
     #[error("Unknown token `{token}` at ({line}, {column})")]
     UnknownToken {

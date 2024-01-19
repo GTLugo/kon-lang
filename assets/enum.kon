@@ -1,11 +1,18 @@
-public include core.*;
+import core.*;
 
-logic: enum {
+logic: enum = {
   false,
   true,
 }
 
-main: () -> i32 {
-  x := logic.true;
-  0
+entry: () -> void = {
+  keep_going := logic.true;
+  y := 0;
+  while keep_going {
+    if y == 3 {
+        keep_going = logic.false;
+    }
+
+    y += 1;
+  }
 }

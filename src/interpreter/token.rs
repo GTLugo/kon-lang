@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use crate::error::InterpreterError;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Symbol {
         line: u32,
@@ -62,71 +62,70 @@ impl Token {
     pub fn reserved_word(value: &str, line: u32, column: u32) -> Option<Self> {
         match value {
             // Keywords
-            "if" => Some(Token::Keyword {
+            Keyword::IF => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::If,
             }),
-            "else" => Some(Token::Keyword {
+            Keyword::ELSE => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::Else,
             }),
-            "for" => Some(Token::Keyword {
+            Keyword::FOR => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::For,
             }),
-            "while" => Some(Token::Keyword {
+            Keyword::WHILE => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::While,
             }),
-            "loop" => Some(Token::Keyword {
+            Keyword::LOOP => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::Loop,
             }),
-            "return" => Some(Token::Keyword {
+            Keyword::RETURN => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::Return,
             }),
-            "self" => Some(Token::Keyword {
+            Keyword::SELF => Some(Token::Keyword {
                 line,
                 column,
-                keyword: Keyword::Selff,
+                keyword: Keyword::_Self,
             }),
-            "super" => Some(Token::Keyword {
+            Keyword::SUPER => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::Super,
             }),
-            "include" => Some(Token::Keyword {
+            Keyword::IMPORT => Some(Token::Keyword {
                 line,
                 column,
-                keyword: Keyword::Include,
+                keyword: Keyword::Import,
             }),
-            "struct" => Some(Token::Keyword {
+            Keyword::TYPE => Some(Token::Keyword {
                 line,
                 column,
-                keyword: Keyword::Struct,
+                keyword: Keyword::Type,
             }),
-            "impl" => Some(Token::Keyword {
+            Keyword::IMPL => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::Impl,
             }),
-            "as" => Some(Token::Keyword {
+            Keyword::AS => Some(Token::Keyword {
                 line,
                 column,
                 keyword: Keyword::As,
             }),
-            // Literals
-            "void" => Some(Token::Literal {
+            Keyword::VOID => Some(Token::Keyword {
                 line,
                 column,
-                literal: Literal::Void,
+                keyword: Keyword::Void,
             }),
             _ => None,
         }
@@ -246,37 +245,60 @@ pub enum Keyword {
     While,
     Loop,
     Return,
-    Selff,
+    _Self,
+    _CapitalSelf,
     Super,
-    Include,
-    Struct,
+    Export,
+    Import,
+    Public,
+    Type,
     Impl,
     As,
+    Void,
 }
 
 impl Keyword {
+    pub const IF: &'static str = "if";
+    pub const ELSE: &'static str = "else";
+    pub const FOR: &'static str = "for";
+    pub const WHILE: &'static str = "while";
+    pub const LOOP: &'static str = "loop";
+    pub const RETURN: &'static str = "return";
+    pub const SELF: &'static str = "self";
+    pub const CAPITAL_SELF: &'static str = "Self";
+    pub const SUPER: &'static str = "super";
+    pub const EXPORT: &'static str = "export";
+    pub const IMPORT: &'static str = "import";
+    pub const PUBLIC: &'static str = "import";
+    pub const TYPE: &'static str = "type";
+    pub const IMPL: &'static str = "impl";
+    pub const AS: &'static str = "as";
+    pub const VOID: &'static str = "void";
+
     pub fn lexeme(&self) -> String {
         match self {
-            Keyword::If { .. } => "if".into(),
-            Keyword::Else { .. } => "else".into(),
-            Keyword::For { .. } => "for".into(),
-            Keyword::While { .. } => "while".into(),
-            Keyword::Loop { .. } => "loop".into(),
-            Keyword::Return { .. } => "return".into(),
-            // Token::Null { .. } => "null".into(),
-            Keyword::Selff { .. } => "self".into(),
-            Keyword::Super { .. } => "super".into(),
-            Keyword::Include { .. } => "use".into(),
-            Keyword::Struct { .. } => "struct".into(),
-            Keyword::Impl { .. } => "impl".into(),
-            Keyword::As { .. } => "as".into(),
+            Keyword::If           => Keyword::IF.into(),
+            Keyword::Else         => Keyword::ELSE.into(),
+            Keyword::For          => Keyword::FOR.into(),
+            Keyword::While        => Keyword::WHILE.into(),
+            Keyword::Loop         => Keyword::LOOP.into(),
+            Keyword::Return       => Keyword::RETURN.into(),
+            Keyword::_Self        => Keyword::SELF.into(),
+            Keyword::_CapitalSelf => Keyword::CAPITAL_SELF.into(),
+            Keyword::Super        => Keyword::SUPER.into(),
+            Keyword::Export       => Keyword::EXPORT.into(),
+            Keyword::Import       => Keyword::IMPORT.into(),
+            Keyword::Public       => Keyword::PUBLIC.into(),
+            Keyword::Type         => Keyword::TYPE.into(),
+            Keyword::Impl         => Keyword::IMPL.into(),
+            Keyword::As           => Keyword::AS.into(),
+            Keyword::Void         => Keyword::VOID.into(),
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
-    Void,
     // Literals
     Identifier { lexeme: String },
     String { lexeme: String },
@@ -289,7 +311,6 @@ impl Literal {
             Literal::Identifier { lexeme, .. } => lexeme.clone(),
             Literal::String { lexeme, .. } => lexeme.clone(),
             Literal::Number { lexeme, .. } => lexeme.to_string(),
-            Literal::Void { .. } => "void".into(),
         }
     }
 }

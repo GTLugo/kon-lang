@@ -313,7 +313,7 @@ impl<'a> Parser<'a> {
                         | Keyword::While
                         | Keyword::Loop
                         | Keyword::Return
-                        | Keyword::Struct
+                        | Keyword::Type
                         | Keyword::Impl,
                     ..
                 }

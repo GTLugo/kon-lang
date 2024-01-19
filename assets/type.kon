@@ -1,0 +1,16 @@
+VTuber: export type = {
+    name: public core.string;
+    real_name: core.string;
+
+    new: public (name: core.string, real_name: core.string) -> Self = {
+        return {
+            name = name,
+            real_name = real_name,
+        };
+    }
+
+    name: public (&self) -> core.string = {
+        return self.name;
+    }
+}
+

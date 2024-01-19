@@ -2,33 +2,33 @@
 
 // core
 //
-// bool: public enum { // yes, bool is an enum
+// logic: pub enum = { // yes, bool is an enum
 //   false,
 //   true,
 // }
-// fixed_array<T>: pub type {
+// fixed_array<T>: pub type = {
 // 
 // }
 // 
-// fixed_array<T>: impl {
-//   new: pub () -> Self {
+// fixed_array<T>: impl = {
+//   new: pub () -> Self = {
 // 
 //   }
 // }
 // 
-// array<T>: pub type {
+// array<T>: pub type = {
 // 
 // }
 // 
-// array<T>: impl {
-//   new: pub () -> Self {
+// array<T>: impl = {
+//   new: pub () -> Self = {
 // 
 //   }
 // }
 
 include core; // this would be unecessary since it would be done by default
 
-main: () -> i32 {
+entry: () -> i32 = {
     x := 10;
     x /= 2;
   core.terminal.print_line(foo(4));
@@ -45,7 +45,7 @@ main: () -> i32 {
   return core.SUCCESS
 }
 
-foo: (a: i32) -> core.string {
+foo: (a: i32) -> core.string = {
   x := 5;
   array := core.array<i32>.new();
 
@@ -57,7 +57,7 @@ foo: (a: i32) -> core.string {
   "hi, friends!"
 }
 
-Vtuber: type {
+Vtuber: type = {
   name: core.string;
 
   new: pub (name: core.string) -> Vtuber {

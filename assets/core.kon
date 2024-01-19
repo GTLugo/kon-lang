@@ -1,5 +1,5 @@
-pub include bool::bool::{self, false, true};
-pub include array::{array, fixed_array};
+export import bool::bool::{self, false, true};
+export import array::{array, fixed_array};
 
-SUCCESS: pub const i32 = 0;
-FAILURE: pub const i32 = 1;
+SUCCESS: export const i32 = 0;
+FAILURE: export const i32 = 1;

@@ -1,10 +1,10 @@
-use std::any::Any;
+use std::{any::Any, fmt::Display};
 
 use crate::error::InterpreterError;
 
-use super::token::{Literal, Symbol, Token};
+use super::token::{Literal, Symbol, Token, Keyword};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal {
         token: Token,
@@ -14,8 +14,8 @@ pub enum Expression {
         operand: Box<Expression>,
     },
     Binary {
-        left_operand: Box<Expression>,
         operator: Token,
+        left_operand: Box<Expression>,
         right_operand: Box<Expression>,
     },
     Grouping {
@@ -29,12 +29,15 @@ impl Expression {
         match self {
             Expression::Literal { token } => match token {
                 Token::Literal { literal, .. } => match literal.clone() {
-                    Literal::Void => Ok(Box::new(())),
                     Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
                     Literal::String { lexeme } => Ok(Box::new(lexeme)),
                     Literal::Number { lexeme } => Ok(Box::new(lexeme)),
                 },
-                _ => unreachable!("only literals should enter this branch"),
+                Token::Keyword { keyword, .. } => match keyword.clone() {
+                    Keyword::Void => Ok(Box::new(())),
+                    _ => unreachable!("only value keywords should enter this branch"),
+                },
+                _ => unreachable!("only literals and value keywords should enter this branch"),
             },
             Expression::Unary { operator, operand } => {
                 let operator_symbol = match operator {
@@ -124,6 +127,38 @@ impl Expression {
             Expression::Grouping { operand } => operand.evaluate(),
             Expression::Invalid => Err(InterpreterError::Unspecified),
         }
+    }
+
+    pub fn pretty_print(&self, indent: usize, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        const INCREMENT: usize = 2;
+        write!(f, "{:indent$}", "")?;
+        match self {
+            Expression::Literal  { token } => {
+                writeln!(f, "Literal: {token}")?;
+            }
+            Expression::Unary    { operator, operand } => {
+                writeln!(f, "Unary: {operator}")?;
+                operand.pretty_print(indent + INCREMENT, f)?;
+            },
+            Expression::Binary   { operator, left_operand, right_operand } => {
+                writeln!(f, "Binary: {operator}")?;
+                left_operand.pretty_print(indent + INCREMENT, f)?;
+                right_operand.pretty_print(indent + INCREMENT, f)?;
+            },
+            Expression::Grouping { operand }  => {
+                writeln!(f, "Grouping")?;
+                operand.pretty_print(indent + INCREMENT, f)?;
+            },
+            Expression::Invalid => write!(f, "Invalid")?,
+        }
+
+        Ok(())
+    }
+}
+
+impl Display for Expression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.pretty_print(0, f)
     }
 }
 

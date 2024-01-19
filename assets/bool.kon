@@ -1,4 +1,0 @@
-bool: public enum {
-  false,
-  true,
-}
