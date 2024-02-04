@@ -143,13 +143,13 @@ impl Parser {
     let mut peeked = tokens.peek();
 
     if self.is_rogue_delimiter(peeked.clone()) {
-      let Next::Token(rogue) = peeked else {
+      let Next::Token(&Token::Symbol { line, column, symbol }) = peeked else {
         return None;
       };
-      self.error(InterpreterError::ParseError {
-        line: rogue.line(),
-        column: rogue.column(),
-        message: format!("Unmatched `{}`", rogue),
+      self.error(InterpreterError::UnmatchedDelimiter {
+        line,
+        column,
+        delimiter: symbol.lexeme(),
       });
       tokens.next(); // consume the delimiter
       peeked = tokens.peek();
