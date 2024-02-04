@@ -192,9 +192,9 @@ impl Parser {
           message: "expected expression".into(),
         })
       }
-      Next::EndOfFile { line, column } => self.error(InterpreterError::ParseError {
-        line,
-        column,
+      Next::EndOfFile { .. } => self.error(InterpreterError::ParseError {
+        line: tokens.previous().line(),
+        column: tokens.previous().column(),
         message: "expected expression".into(),
       }),
       Next::EndOfStream { line, column } => self.error(InterpreterError::ParseError {

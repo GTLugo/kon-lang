@@ -11,11 +11,11 @@ pub mod token;
 mod token_provider;
 
 #[derive(Default)]
-pub struct Interpreter {}
+pub struct Interpreter;
 
 impl Interpreter {
   pub fn new() -> Interpreter {
-    Self {}
+    Self
   }
 
   pub fn run(&mut self, source: String) -> Result<(), KonError> {
@@ -31,9 +31,9 @@ impl Interpreter {
       parser.parse(&tokens)
     };
 
-    println!("{expression}");
-
     error_handler.get().try_report_errors()?;
+
+    println!("{expression}");
 
     print!("Result: ");
     if let Ok(result) = expression.evaluate() {
@@ -44,8 +44,6 @@ impl Interpreter {
       if let Some(value) = result.downcast_ref::<String>() {
         println!("{value}");
       }
-    } else {
-      println!("Invalid");
     }
 
     Ok(())
