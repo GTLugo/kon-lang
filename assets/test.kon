@@ -1,9 +1,10 @@
 // Kon Lang by Gabriel Lugo
-
 // import core.*;
-
 // entry: () = {
+//   terminal.print("kon kon\n");
 //   terminal.print_line("bau bau");
+//   input := terminal.read_line();
 // }
 
+// Expressions
 1 + (3 ^ (2 * 3) - 5 / 2)
