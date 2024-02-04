@@ -26,7 +26,7 @@ impl Parser {
         self.error_handler.get_mut().push(InterpreterError::ParseError {
           line: t.line(),
           column: t.column(),
-          message: format!("Expected expression but got `{}`", t),
+          message: format!("Expected EOF but got `{}`", t),
         });
         SyntaxTree {
           root,
