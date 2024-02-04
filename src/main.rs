@@ -26,7 +26,9 @@ fn run_file(flags: Cli) -> Result<(), KonError> {
 
     let source = fs::read_to_string(file)?;
 
-    interpreter.run(source)?;
+    let result = interpreter.run(source)?;
+
+    println!("{result}");
   }
 
   Ok(())
@@ -35,22 +37,31 @@ fn run_file(flags: Cli) -> Result<(), KonError> {
 fn run_prompt() -> Result<(), KonError> {
   let mut interpreter = Interpreter::new();
 
-  print_prompt()?;
   loop {
+    // Print
+    println!();
+    print_prompt()?;
+
     // Read
     let mut buffer = String::new();
     std::io::stdin().read_line(&mut buffer)?;
 
     // Evaluate
-    if let Err(error) = interpreter.run(buffer) {
-      if let KonError::InterpreterErrors(..) = error {
-        println!("{}", error);
+    if buffer.trim_end() == "#ast" {
+      interpreter.show_tree();
+      continue;
+    }
+
+    match interpreter.run(buffer) {
+      Ok(result) => {
+        println!("{result}");
+      }
+      Err(error) => {
+        if let KonError::InterpreterErrors(..) = error {
+          println!("{}", error);
+        }
       }
     };
-
-    // Print
-    println!();
-    print_prompt()?;
   }
 }
 

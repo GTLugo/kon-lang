@@ -1,6 +1,6 @@
 use foxy_utils::types::handle::Handle;
 
-use self::{lexer::Lexer, parser::Parser};
+use self::{grammar::SyntaxTree, lexer::Lexer, parser::Parser};
 use crate::error::{error_handler::ErrorHandler, KonError};
 
 mod character_provider;
@@ -14,6 +14,7 @@ pub struct Interpreter {
   error_handler: Handle<ErrorHandler>,
   lexer: Lexer,
   parser: Parser,
+  tree: Option<SyntaxTree>,
 }
 
 impl Default for Interpreter {
@@ -32,30 +33,38 @@ impl Interpreter {
       error_handler,
       lexer,
       parser,
+      tree: None,
     }
   }
 
-  pub fn run(&mut self, source: String) -> Result<(), KonError> {
+  pub fn run(&mut self, source: String) -> Result<String, KonError> {
+    self.error_handler.get_mut().clear();
     let tokens = self.lexer.scan(&source);
 
-    let expression = self.parser.parse(&tokens);
-
-    println!("{expression}");
+    self.tree = Some(self.parser.parse(&tokens));
 
     self.error_handler.get().try_report_errors()?;
-    self.error_handler.get_mut().clear();
 
-    print!("Result: ");
-    if let Ok(result) = expression.root.evaluate() {
+    // print!("Result: ");
+
+    if let Ok(result) = self.tree.as_ref().unwrap().root.evaluate() {
       if let Some(&value) = result.downcast_ref::<f64>() {
-        println!("{value}");
+        return Ok(value.to_string());
       }
 
       if let Some(value) = result.downcast_ref::<String>() {
-        println!("{value}");
+        return Ok(value.clone());
       }
     }
 
-    Ok(())
+    Err(KonError::Other("Failed to evaluate expression".into()))
+  }
+
+  pub fn show_tree(&self) {
+    if let Some(tree) = self.tree.as_ref() {
+      print!("{}", tree); // tree has trailing newline due to recursive impl
+    } else {
+      println!("None");
+    }
   }
 }
