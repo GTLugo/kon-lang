@@ -32,7 +32,9 @@ pub enum Expression {
   Grouping {
     operand: Box<Expression>,
   },
-  Invalid,
+  Invalid {
+    token: Option<Token>,
+  },
 }
 
 impl Expression {
@@ -121,7 +123,14 @@ impl Expression {
         Err(InterpreterError::Unspecified)
       }
       Expression::Grouping { operand } => operand.evaluate(),
-      Expression::Invalid => Err(InterpreterError::Unspecified),
+      Expression::Invalid { .. } => Expression::Literal {
+        token: Token::Keyword {
+          line: 0,
+          column: 0,
+          keyword: Keyword::Void,
+        },
+      }
+      .evaluate(),
     }
   }
 
@@ -149,7 +158,7 @@ impl Expression {
         writeln!(f, "Grouping")?;
         operand.pretty_print(indent + INCREMENT, f)?;
       }
-      Expression::Invalid => write!(f, "Invalid")?,
+      Expression::Invalid { token } => write!(f, "[Invalid] token?: {token:?}")?,
     }
 
     Ok(())

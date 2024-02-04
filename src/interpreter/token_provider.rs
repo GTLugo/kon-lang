@@ -56,7 +56,7 @@ impl<'a> TokenProvider<'a> {
     }
   }
 
-  pub fn previous_valid(&mut self) -> &Token {
+  pub fn previous_valid(&self) -> &Token {
     &self.previous_valid_token
   }
 

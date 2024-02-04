@@ -31,9 +31,9 @@ impl Interpreter {
       parser.parse(&tokens)
     };
 
-    error_handler.get().try_report_errors()?;
-
     println!("{expression}");
+
+    error_handler.get().try_report_errors()?;
 
     print!("Result: ");
     if let Ok(result) = expression.root.evaluate() {

@@ -256,14 +256,14 @@ impl Lexer {
             return Some(Token::Symbol {
               line: characters.current_line(),
               column: characters.current_column(),
-              symbol: Symbol::LeftSquigglyBracket,
+              symbol: Symbol::LeftCurlyBracket,
             })
           }
           '}' => {
             return Some(Token::Symbol {
               line: characters.current_line(),
               column: characters.current_column(),
-              symbol: Symbol::RightSquigglyBracket,
+              symbol: Symbol::RightCurlyBracket,
             })
           }
           '<' => {

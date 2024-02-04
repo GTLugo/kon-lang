@@ -1,8 +1,12 @@
 use std::fmt::{Display, Formatter};
 
+use strum::EnumDiscriminants;
+
 use crate::error::InterpreterError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, EnumDiscriminants)]
+#[strum_discriminants(enumflags2::bitflags())]
+#[strum_discriminants(repr(u16))]
 pub enum Token {
   Symbol { line: u32, column: u32, symbol: Symbol },
   Keyword { line: u32, column: u32, keyword: Keyword },
@@ -121,6 +125,8 @@ impl Display for Token {
   }
 }
 
+#[enumflags2::bitflags]
+#[repr(u64)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Symbol {
   // Single-character
@@ -128,8 +134,8 @@ pub enum Symbol {
   RightParenthesis,
   LeftSquareBracket,
   RightSquareBracket,
-  LeftSquigglyBracket,
-  RightSquigglyBracket,
+  LeftCurlyBracket,
+  RightCurlyBracket,
   Hashtag,
   Comma,
   Period,
@@ -179,8 +185,8 @@ impl Symbol {
       Symbol::RightAngledBracket { .. } => ">".into(),
       Symbol::LeftSquareBracket { .. } => "[".into(),
       Symbol::RightSquareBracket { .. } => "]".into(),
-      Symbol::LeftSquigglyBracket { .. } => "{".into(),
-      Symbol::RightSquigglyBracket { .. } => "}".into(),
+      Symbol::LeftCurlyBracket { .. } => "{".into(),
+      Symbol::RightCurlyBracket { .. } => "}".into(),
       Symbol::Hashtag { .. } => "#".into(),
       Symbol::Comma { .. } => ",".into(),
       Symbol::Period { .. } => ".".into(),
