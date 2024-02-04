@@ -2,7 +2,7 @@
 
 // import core.*;
 
-// entry: () -> () = {
+// entry: () = {
 //   terminal.print_line("bau bau");
 // }
 
