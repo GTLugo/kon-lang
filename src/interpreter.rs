@@ -39,7 +39,7 @@ impl Interpreter {
 
   pub fn run(&mut self, source: String) -> Result<String, KonError> {
     self.error_handler.get_mut().clear();
-    let tokens = self.lexer.scan(&source);
+    let tokens = self.lexer.lex(&source);
 
     self.tree = Some(self.parser.parse(&tokens));
 

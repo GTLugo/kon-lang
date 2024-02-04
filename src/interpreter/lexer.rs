@@ -18,7 +18,7 @@ impl Lexer {
     Self { error_handler }
   }
 
-  pub fn scan(&mut self, source: &str) -> Vec<Token> {
+  pub fn lex(&mut self, source: &str) -> Vec<Token> {
     let mut characters = CharacterProvider::new(source);
 
     let mut tokens = Vec::default();
