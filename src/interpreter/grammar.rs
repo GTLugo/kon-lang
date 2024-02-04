@@ -5,7 +5,7 @@ use crate::error::InterpreterError;
 
 #[derive(Debug, PartialEq)]
 pub struct SyntaxTree {
-  pub root: Expression, 
+  pub root: Expression,
   pub eof: Token,
 }
 

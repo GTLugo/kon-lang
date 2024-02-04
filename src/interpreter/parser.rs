@@ -1,5 +1,4 @@
 use foxy_utils::types::handle::Handle;
-use tracing::debug;
 
 use super::{
   grammar::{Expression, SyntaxTree},

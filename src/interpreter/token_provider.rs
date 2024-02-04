@@ -63,20 +63,16 @@ impl<'a> TokenProvider<'a> {
   pub fn next(&mut self) -> Next<&Token> {
     match self.tokens.next() {
       Some(token) => match token {
-        &Token::EndOfFile { line, column } => {
-          Next::EndOfFile { line, column }
-        }
+        &Token::EndOfFile { line, column } => Next::EndOfFile { line, column },
         t => {
           self.previous_valid_token = t.clone();
           Next::Token(t)
         }
       },
-      None => {
-        Next::EndOfStream {
-          line: self.last_line,
-          column: self.last_column,
-        }
-      }
+      None => Next::EndOfStream {
+        line: self.last_line,
+        column: self.last_column,
+      },
     }
   }
 }
