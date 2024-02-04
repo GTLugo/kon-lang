@@ -36,7 +36,7 @@ impl Interpreter {
     println!("{expression}");
 
     print!("Result: ");
-    if let Ok(result) = expression.evaluate() {
+    if let Ok(result) = expression.root.evaluate() {
       if let Some(&value) = result.downcast_ref::<f64>() {
         println!("{value}");
       }

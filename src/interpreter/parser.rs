@@ -1,7 +1,8 @@
 use foxy_utils::types::handle::Handle;
+use tracing::debug;
 
 use super::{
-  grammar::Expression,
+  grammar::{Expression, SyntaxTree},
   token::{Keyword, Literal, Symbol, Token},
   token_provider::{Next, TokenProvider},
 };
@@ -16,11 +17,35 @@ impl Parser {
     Self { error_handler }
   }
 
-  pub fn parse(&mut self, tokens: &[Token]) -> Expression {
+  pub fn parse(&mut self, tokens: &[Token]) -> SyntaxTree {
     let mut tokens = TokenProvider::new(tokens);
-    self
-      .expression(&mut tokens)
-      .unwrap_or_else(|_error| Expression::Invalid)
+    let root = self.expression(&mut tokens).unwrap_or_else(|_| Expression::Invalid);
+
+    let next = tokens.peek().cloned();
+    match next {
+      Next::Token(t) => {
+        self.error_handler.get_mut().push(InterpreterError::ParseError {
+          line: t.line(),
+          column: t.column(),
+          message: format!("Expected expression but got `{}`", t),
+        });
+        SyntaxTree {
+          root,
+          eof: Token::EndOfFile {
+            line: t.line(),
+            column: t.column() + 1,
+          },
+        }
+      }
+      Next::EndOfFile { line, column } => SyntaxTree {
+        root,
+        eof: Token::EndOfFile { line, column },
+      },
+      Next::EndOfStream { line, column } => SyntaxTree {
+        root,
+        eof: Token::EndOfFile { line, column },
+      },
+    }
   }
 
   fn expression(&mut self, tokens: &mut TokenProvider) -> Result<Expression, InterpreterError> {
@@ -189,19 +214,25 @@ impl Parser {
         self.error(InterpreterError::ParseError {
           line: token.line(),
           column: token.column(),
-          message: "expected expression".into(),
+          message: format!("Expected expression but got `{}`", tokens.previous_valid()),
         })
       }
-      Next::EndOfFile { .. } => self.error(InterpreterError::ParseError {
-        line: tokens.previous().line(),
-        column: tokens.previous().column(),
-        message: "expected expression".into(),
-      }),
-      Next::EndOfStream { line, column } => self.error(InterpreterError::ParseError {
-        line,
-        column,
-        message: "expected expression".into(),
-      }),
+      Next::EndOfFile { .. } => {
+        let prev = tokens.previous_valid();
+        self.error(InterpreterError::ParseError {
+          line: prev.line(),
+          column: prev.column() + prev.lexeme().len() as u32,
+          message: format!("Expected expression after `{}`", prev),
+        })
+      }
+      Next::EndOfStream { .. } => {
+        let prev = tokens.previous_valid();
+        self.error(InterpreterError::ParseError {
+          line: prev.line(),
+          column: prev.column() + prev.lexeme().len() as u32,
+          message: format!("Expected expression after `{}`", prev),
+        })
+      }
     }
   }
 

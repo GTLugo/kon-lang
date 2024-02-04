@@ -15,9 +15,7 @@ pub struct Lexer {
 
 impl Lexer {
   pub fn new(error_handler: Handle<ErrorHandler>) -> Self {
-    Self {
-      error_handler
-    }
+    Self { error_handler }
   }
 
   pub fn scan(&mut self, source: &str) -> Vec<Token> {

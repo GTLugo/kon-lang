@@ -27,17 +27,17 @@ impl Debug for KonError {
 
 #[derive(Error, Debug, EnumDiscriminants, Clone, PartialEq, Eq)]
 pub enum InterpreterError {
-  #[error("Unknown token `{token}` at ({line}, {column})")]
+  #[error("Unknown token `{token}` ({line}, {column})")]
   UnknownToken { line: u32, column: u32, token: String },
-  #[error("Syntax error `{message}` at ({line}, {column})")]
+  #[error("{message} ({line}, {column})")]
   SyntaxError { line: u32, column: u32, message: String },
-  #[error("Unterminated string at ({line}, {column})")]
+  #[error("Unterminated string ({line}, {column})")]
   UnterminatedString { line: u32, column: u32 },
-  #[error("Parsing error `{message}` at ({line}, {column})")]
+  #[error("{message} ({line}, {column})")]
   ParseError { line: u32, column: u32, message: String },
-  #[error("End of file error `{message}` at ({line}, {column})")]
+  #[error("{message} ({line}, {column})")]
   EOFError { line: u32, column: u32, message: String },
-  #[error("Expected `{delimiter}` or expression at ({line}, {column})")]
+  #[error("Expected `{delimiter}` or expression ({line}, {column})")]
   UnmatchedDelimiter { line: u32, column: u32, delimiter: String },
   #[error("Unspecified error")]
   Unspecified,

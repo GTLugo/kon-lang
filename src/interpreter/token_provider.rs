@@ -20,7 +20,7 @@ impl<T: Clone> Next<&T> {
 }
 
 pub struct TokenProvider<'a> {
-  previous_token: Token,
+  previous_valid_token: Token,
   tokens: Peekable<Iter<'a, Token>>,
   last_line: u32,
   last_column: u32,
@@ -29,7 +29,7 @@ pub struct TokenProvider<'a> {
 impl<'a> TokenProvider<'a> {
   pub fn new(tokens: &'a [Token]) -> Self {
     Self {
-      previous_token: Token::EndOfFile { line: 0, column: 0 },
+      previous_valid_token: Token::EndOfFile { line: 0, column: 0 },
       tokens: tokens.iter().peekable(),
       last_line: 0,
       last_column: 0,
@@ -56,23 +56,27 @@ impl<'a> TokenProvider<'a> {
     }
   }
 
-  pub fn previous(&mut self) -> &Token {
-    &self.previous_token
+  pub fn previous_valid(&mut self) -> &Token {
+    &self.previous_valid_token
   }
 
   pub fn next(&mut self) -> Next<&Token> {
     match self.tokens.next() {
       Some(token) => match token {
-        &Token::EndOfFile { line, column } => Next::EndOfFile { line, column },
+        &Token::EndOfFile { line, column } => {
+          Next::EndOfFile { line, column }
+        }
         t => {
-          self.previous_token = t.clone();
+          self.previous_valid_token = t.clone();
           Next::Token(t)
-        },
+        }
       },
-      None => Next::EndOfStream {
-        line: self.last_line,
-        column: self.last_column,
-      },
+      None => {
+        Next::EndOfStream {
+          line: self.last_line,
+          column: self.last_column,
+        }
+      }
     }
   }
 }

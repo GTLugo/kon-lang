@@ -1,6 +1,7 @@
 use std::{fs, io::Write};
 
 use clap::Parser;
+use foxy_utils::start_debug_logging_session;
 use kon::{error::KonError, interpreter::Interpreter};
 
 use self::cli::Cli;
@@ -8,6 +9,8 @@ use self::cli::Cli;
 mod cli;
 
 fn main() -> Result<(), KonError> {
+  start_debug_logging_session!();
+
   let cli = Cli::parse();
 
   if cli.mode.interactive {
@@ -52,7 +55,7 @@ fn run_prompt() -> Result<(), KonError> {
 }
 
 fn print_prompt() -> Result<(), KonError> {
-  print!(r#"❯ "#);
+  print!("$ ");
   std::io::stdout().flush()?;
 
   Ok(())
