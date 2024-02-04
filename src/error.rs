@@ -37,7 +37,7 @@ pub enum InterpreterError {
   ParseError { line: u32, column: u32, message: String },
   #[error("{message} ({line}, {column})")]
   EOFError { line: u32, column: u32, message: String },
-  #[error("Expected `{delimiter}` or expression ({line}, {column})")]
+  #[error("Unmatched `{delimiter}` ({line}, {column})")]
   UnmatchedDelimiter { line: u32, column: u32, delimiter: String },
   #[error("Unspecified error")]
   Unspecified,

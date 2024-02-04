@@ -29,6 +29,10 @@ impl ErrorHandler {
     &self.errors
   }
 
+  pub fn clear(&mut self) {
+    self.errors.clear();
+  }
+
   pub fn report_errors(&self) -> KonError {
     for error in &self.errors {
       error.report();

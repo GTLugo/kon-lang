@@ -8,9 +8,84 @@ use super::{
 };
 use crate::error::{error_handler::ErrorHandler, InterpreterError};
 
+#[derive(Debug, PartialEq, Eq)]
+enum DelimiterType {
+  Paren,
+  Curly,
+  Angled,
+  Square,
+}
+
+#[derive(Debug, Eq)]
+struct Delimiter {
+  delimiter: DelimiterType,
+  line: u32,
+  column: u32,
+}
+
+impl Delimiter {
+  pub fn lexeme(&self) -> String {
+    match self.delimiter {
+      DelimiterType::Paren => "(".into(),
+      DelimiterType::Curly => "{".into(),
+      DelimiterType::Angled => "<".into(),
+      DelimiterType::Square => "[".into(),
+    }
+  }
+
+  fn line(&self) -> u32 {
+    self.line
+  }
+
+  fn column(&self) -> u32 {
+    self.column
+  }
+}
+
+impl PartialEq for Delimiter {
+  fn eq(&self, other: &Self) -> bool {
+    self.delimiter == other.delimiter
+  }
+}
+
+impl TryFrom<Token> for Delimiter {
+  type Error = ();
+
+  fn try_from(token: Token) -> Result<Self, Self::Error> {
+    let Token::Symbol { symbol, .. } = token else {
+      return Err(());
+    };
+
+    if !matches!(
+      symbol,
+      Symbol::RightParenthesis | Symbol::RightAngledBracket | Symbol::RightCurlyBracket | Symbol::RightSquareBracket
+    ) {
+      return Err(());
+    }
+
+    let delimiter = match symbol {
+      Symbol::LeftParenthesis => DelimiterType::Paren,
+      Symbol::LeftAngledBracket => DelimiterType::Angled,
+      Symbol::LeftCurlyBracket => DelimiterType::Curly,
+      Symbol::LeftSquareBracket => DelimiterType::Square,
+      Symbol::RightParenthesis => DelimiterType::Paren,
+      Symbol::RightAngledBracket => DelimiterType::Angled,
+      Symbol::RightCurlyBracket => DelimiterType::Curly,
+      Symbol::RightSquareBracket => DelimiterType::Square,
+      _ => return Err(()),
+    };
+
+    Ok(Self {
+      delimiter,
+      line: token.line(),
+      column: token.column(),
+    })
+  }
+}
+
 pub struct Parser {
   error_handler: Handle<ErrorHandler>,
-  delimiter_stack: Vec<Symbol>,
+  delimiter_stack: Vec<Delimiter>,
 }
 
 impl Parser {
@@ -53,26 +128,15 @@ impl Parser {
   }
 
   fn is_rogue_delimiter(&mut self, token: Next<&Token>) -> bool {
-    let Next::Token(Token::Symbol { symbol, .. }) = token else {
+    let Next::Token(token) = token.cloned() else {
       return false;
     };
 
-    if !matches!(
-      symbol,
-      Symbol::RightParenthesis | Symbol::RightAngledBracket | Symbol::RightCurlyBracket | Symbol::RightSquareBracket
-    ) {
+    let Ok(delim) = token.try_into() else {
       return false;
-    }
-
-    let pair = match symbol {
-      Symbol::RightParenthesis => Symbol::LeftParenthesis,
-      Symbol::RightAngledBracket => Symbol::LeftAngledBracket,
-      Symbol::RightCurlyBracket => Symbol::LeftCurlyBracket,
-      Symbol::RightSquareBracket => Symbol::LeftSquareBracket,
-      _ => unreachable!(),
     };
 
-    !self.delimiter_stack.ends_with(&[pair])
+    !self.delimiter_stack.ends_with(&[delim])
   }
 
   fn match_token(&mut self, tokens: &mut TokenProvider, types: BitFlags<TokenDiscriminants>) -> Option<Token> {
@@ -253,16 +317,23 @@ impl Parser {
             Literal::String { .. } | Literal::Number { .. } => return Expression::Literal { token: token.clone() },
             _ => {}
           },
-          Token::Symbol { symbol, .. } => match symbol {
+          Token::Symbol { line, column, symbol } => match symbol {
             Symbol::LeftParenthesis => {
-              self.delimiter_stack.push(*symbol);
+              self.delimiter_stack.push(Delimiter {
+                delimiter: DelimiterType::Paren,
+                line: *line,
+                column: *column,
+              });
               let operand = Box::new(self.expression(tokens));
               let _delimiter = self.pair_delimiter(tokens, Symbol::RightParenthesis);
-              self.delimiter_stack.pop();
               return Expression::Grouping { operand };
             }
             Symbol::LeftCurlyBracket => {
-              self.delimiter_stack.push(*symbol);
+              self.delimiter_stack.push(Delimiter {
+                delimiter: DelimiterType::Curly,
+                line: *line,
+                column: *column,
+              });
               let operand = Box::new(self.expression(tokens));
               let _delimiter = self.pair_delimiter(tokens, Symbol::RightCurlyBracket);
               self.delimiter_stack.pop();
@@ -321,6 +392,7 @@ impl Parser {
   }
 
   fn pair_delimiter(&mut self, tokens: &mut TokenProvider, delimiter: Symbol) -> Token {
+    let unmatched = self.delimiter_stack.pop().expect("expected Some(delimiter)");
     match self.check_delimiter(tokens, &delimiter) {
       Ok(matches) => match tokens.next().cloned() {
         Next::Token(token) => {
@@ -333,9 +405,9 @@ impl Parser {
               symbol: delimiter,
             };
             self.error(InterpreterError::UnmatchedDelimiter {
-              line: delimiter.line(),
-              column: delimiter.column(),
-              delimiter: delimiter.lexeme(),
+              line: unmatched.line(),
+              column: unmatched.column(),
+              delimiter: unmatched.lexeme(),
             });
             delimiter
           }
@@ -347,9 +419,9 @@ impl Parser {
             symbol: delimiter,
           };
           self.error(InterpreterError::UnmatchedDelimiter {
-            line: delimiter.line(),
-            column: delimiter.column(),
-            delimiter: delimiter.lexeme(),
+            line: unmatched.line(),
+            column: unmatched.column(),
+            delimiter: unmatched.lexeme(),
           });
           delimiter
         }
@@ -361,9 +433,9 @@ impl Parser {
           symbol: delimiter,
         };
         self.error(InterpreterError::UnmatchedDelimiter {
-          line: delimiter.line(),
-          column: delimiter.column(),
-          delimiter: delimiter.lexeme(),
+          line: unmatched.line(),
+          column: unmatched.column(),
+          delimiter: unmatched.lexeme(),
         });
         delimiter
       }
