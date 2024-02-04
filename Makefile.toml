@@ -7,9 +7,10 @@ BUILD_TYPE = "release"
 
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+CARGO_MAKE_RUN_TARGET_DIR            = "./target/${BUILD_TYPE}"
 CARGO_MAKE_RUN_TARGET                = "kon"
 PROJECT_ASSET_FOLDER_LOCATION        = "./assets"
-ASSET_FOLDER_DESTINATION             = "./target/${BUILD_TYPE}/assets"
+ASSET_FOLDER_DESTINATION             = "${CARGO_MAKE_RUN_TARGET_DIR}/assets"
 
 [config]
 skip_core_tasks = true
@@ -30,6 +31,20 @@ dependencies = ["copy-resources"]
 workspace    = false
 command      = "cargo"
 args         = ["build", "--release"]
+dependencies = ["copy-resources"]
+
+### RUN ###
+
+[tasks.run]
+workspace    = false
+command      = "${CARGO_MAKE_RUN_TARGET_DIR}/${CARGO_MAKE_RUN_TARGET}"
+args         = ["-i"]
+dependencies = ["copy-resources"]
+
+[tasks.run-file]
+workspace    = false
+command      = "${CARGO_MAKE_RUN_TARGET_DIR}/${CARGO_MAKE_RUN_TARGET}"
+args         = ["-f./assets/test.kon"]
 dependencies = ["copy-resources"]
 
 ### OTHER ###
