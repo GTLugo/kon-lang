@@ -351,10 +351,10 @@ impl Parser {
         });
 
         Expression::Invalid {
-          token: Some(Token::Keyword {
+          token: Some(Token::Literal {
             line: token.line(),
             column: token.column(),
-            keyword: Keyword::Void,
+            literal: Literal::Void,
           }),
         }
       }
@@ -366,10 +366,10 @@ impl Parser {
           message: format!("Expected expression after `{}`", prev),
         });
         Expression::Invalid {
-          token: Some(Token::Keyword {
+          token: Some(Token::Literal {
             line,
             column,
-            keyword: Keyword::Void,
+            literal: Literal::Void,
           }),
         }
       }
@@ -381,10 +381,10 @@ impl Parser {
           message: format!("Expected expression after `{}`", prev),
         });
         Expression::Invalid {
-          token: Some(Token::Keyword {
+          token: Some(Token::Literal {
             line,
             column,
-            keyword: Keyword::Void,
+            literal: Literal::Void,
           }),
         }
       }

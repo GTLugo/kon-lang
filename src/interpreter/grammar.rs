@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Display};
 
-use super::token::{Keyword, Literal, Symbol, Token};
+use super::token::{Literal, Symbol, Token};
 use crate::error::InterpreterError;
 
 #[derive(Debug, PartialEq)]
@@ -45,12 +45,9 @@ impl Expression {
           Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
           Literal::String { lexeme } => Ok(Box::new(lexeme)),
           Literal::Number { lexeme } => Ok(Box::new(lexeme)),
+          Literal::Void => Ok(Box::new(())),
         },
-        Token::Keyword { keyword, .. } => match keyword.clone() {
-          Keyword::Void => Ok(Box::new(())),
-          _ => unreachable!("only value keywords should enter this branch"),
-        },
-        _ => unreachable!("only literals and value keywords should enter this branch"),
+        _ => unreachable!("only literals should enter this branch"),
       },
       Expression::Unary { operator, operand } => {
         let operator_symbol = match operator {
@@ -124,10 +121,10 @@ impl Expression {
       }
       Expression::Grouping { operand } => operand.evaluate(),
       Expression::Invalid { .. } => Expression::Literal {
-        token: Token::Keyword {
+        token: Token::Literal {
           line: 0,
           column: 0,
-          keyword: Keyword::Void,
+          literal: Literal::Void,
         },
       }
       .evaluate(),
@@ -158,7 +155,7 @@ impl Expression {
         writeln!(f, "Grouping")?;
         operand.pretty_print(indent + INCREMENT, f)?;
       }
-      Expression::Invalid { token } => write!(f, "[Invalid] token?: {token:?}")?,
+      Expression::Invalid { token } => writeln!(f, "[Invalid] token?: {token:?}")?,
     }
 
     Ok(())

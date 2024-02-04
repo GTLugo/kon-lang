@@ -109,11 +109,11 @@ impl Token {
         column,
         keyword: Keyword::As,
       }),
-      Keyword::VOID => Some(Token::Keyword {
-        line,
-        column,
-        keyword: Keyword::Void,
-      }),
+      // Keyword::VOID => Some(Token::Keyword {
+      //   line,
+      //   column,
+      //   keyword: Keyword::Void,
+      // }),
       _ => None,
     }
   }
@@ -243,7 +243,7 @@ pub enum Keyword {
   Type,
   Impl,
   As,
-  Void,
+  // Void,
 }
 
 impl Keyword {
@@ -261,7 +261,7 @@ impl Keyword {
   pub const SELF: &'static str = "self";
   pub const SUPER: &'static str = "super";
   pub const TYPE: &'static str = "type";
-  pub const VOID: &'static str = "void";
+  // pub const VOID: &'static str = "void";
   pub const WHILE: &'static str = "while";
 
   pub fn lexeme(&self) -> String {
@@ -281,7 +281,7 @@ impl Keyword {
       Keyword::Type => Keyword::TYPE.into(),
       Keyword::Impl => Keyword::IMPL.into(),
       Keyword::As => Keyword::AS.into(),
-      Keyword::Void => Keyword::VOID.into(),
+      // Keyword::Void => Keyword::VOID.into(),
     }
   }
 }
@@ -292,6 +292,7 @@ pub enum Literal {
   Identifier { lexeme: String },
   String { lexeme: String },
   Number { lexeme: f64 },
+  Void,
 }
 
 impl Literal {
@@ -300,6 +301,7 @@ impl Literal {
       Literal::Identifier { lexeme, .. } => lexeme.clone(),
       Literal::String { lexeme, .. } => lexeme.clone(),
       Literal::Number { lexeme, .. } => lexeme.to_string(),
+      Literal::Void => "()".into(),
     }
   }
 }

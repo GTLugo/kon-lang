@@ -239,11 +239,19 @@ impl Lexer {
             };
           }
           '(' => {
-            return Some(Token::Symbol {
-              line: characters.current_line(),
-              column: characters.current_column(),
-              symbol: Symbol::LeftParenthesis,
-            })
+            return if Self::next_char_is(characters, ')') {
+              Some(Token::Literal {
+                line: characters.current_line(),
+                column: characters.current_column(),
+                literal: Literal::Void,
+              })
+            } else {
+              Some(Token::Symbol {
+                line: characters.current_line(),
+                column: characters.current_column(),
+                symbol: Symbol::LeftParenthesis,
+              })
+            };
           }
           ')' => {
             return Some(Token::Symbol {
