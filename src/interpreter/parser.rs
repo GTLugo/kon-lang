@@ -149,7 +149,7 @@ impl Parser {
       self.error(InterpreterError::ParseError {
         line: rogue.line(),
         column: rogue.column(),
-        message: format!("Rogue `{}`", rogue),
+        message: format!("Unmatched `{}`", rogue),
       });
       tokens.next(); // consume the delimiter
       peeked = tokens.peek();
