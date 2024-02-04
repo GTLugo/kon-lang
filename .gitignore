@@ -3,5 +3,7 @@
 /.fleet
 /.vscode
 /.vs
+/.cargo
 
 Cargo.lock
+rustc-ice-*
