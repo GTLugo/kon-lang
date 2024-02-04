@@ -5,9 +5,9 @@ use crate::error::{error_handler::ErrorHandler, KonError};
 
 mod character_provider;
 mod grammar;
-pub mod lexer;
-pub mod parser;
-pub mod token;
+mod lexer;
+mod parser;
+mod token;
 mod token_provider;
 
 pub struct Interpreter {

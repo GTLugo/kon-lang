@@ -1,8 +1,9 @@
 // Kon Lang by Gabriel Lugo
 
-// import core;
+// import core.*;
 
-// entry: () -> void = {
-    
+// entry: () -> () = {
+//   terminal.print_line("bau bau");
 // }
+
 1 + (3 ^ (2 * 3) - 5 / 2)

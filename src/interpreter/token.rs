@@ -235,7 +235,7 @@ pub enum Keyword {
   Loop,
   Return,
   _Self,
-  _CapitalSelf,
+  _SelfType,
   Super,
   Export,
   Import,
@@ -248,7 +248,7 @@ pub enum Keyword {
 
 impl Keyword {
   pub const AS: &'static str = "as";
-  pub const CAPITAL_SELF: &'static str = "Self";
+  pub const SELF_TYPE: &'static str = "Self";
   pub const ELSE: &'static str = "else";
   pub const EXPORT: &'static str = "export";
   pub const FOR: &'static str = "for";
@@ -256,7 +256,7 @@ impl Keyword {
   pub const IMPL: &'static str = "impl";
   pub const IMPORT: &'static str = "import";
   pub const LOOP: &'static str = "loop";
-  pub const PUBLIC: &'static str = "import";
+  pub const PUBLIC: &'static str = "pub";
   pub const RETURN: &'static str = "return";
   pub const SELF: &'static str = "self";
   pub const SUPER: &'static str = "super";
@@ -273,7 +273,7 @@ impl Keyword {
       Keyword::Loop => Keyword::LOOP.into(),
       Keyword::Return => Keyword::RETURN.into(),
       Keyword::_Self => Keyword::SELF.into(),
-      Keyword::_CapitalSelf => Keyword::CAPITAL_SELF.into(),
+      Keyword::_SelfType => Keyword::SELF_TYPE.into(),
       Keyword::Super => Keyword::SUPER.into(),
       Keyword::Export => Keyword::EXPORT.into(),
       Keyword::Import => Keyword::IMPORT.into(),
