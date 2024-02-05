@@ -1,11 +1,14 @@
 use enumflags2::BitFlags;
 use foxy_utils::types::handle::Handle;
 
-use super::{
-  grammar::{Expression, SyntaxTree},
-  token::{Keyword, Literal, Symbol, Token, TokenDiscriminants},
-  token_provider::{Next, TokenProvider},
-};
+use super::{grammar::{
+  keyword::Keyword,
+  literal::Literal,
+  symbol::Symbol,
+  token::{Token, TokenDiscriminants},
+  Expression,
+  SyntaxTree,
+}, util::token_provider::{Next, TokenProvider}};
 use crate::error::{error_handler::ErrorHandler, InterpreterError};
 
 #[derive(Debug, PartialEq, Eq)]

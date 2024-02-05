@@ -1,7 +1,13 @@
 use std::{any::Any, fmt::Display};
 
-use super::token::{Literal, Symbol, Token};
 use crate::error::InterpreterError;
+
+use self::{literal::Literal, symbol::Symbol, token::Token};
+
+pub mod keyword;
+pub mod literal;
+pub mod symbol;
+pub mod token;
 
 #[derive(Debug, PartialEq)]
 pub struct SyntaxTree {

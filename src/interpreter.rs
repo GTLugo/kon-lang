@@ -3,12 +3,10 @@ use foxy_utils::types::handle::Handle;
 use self::{grammar::SyntaxTree, lexer::Lexer, parser::Parser};
 use crate::error::{error_handler::ErrorHandler, KonError};
 
-mod character_provider;
 mod grammar;
 mod lexer;
 mod parser;
-mod token;
-mod token_provider;
+mod util;
 
 pub struct Interpreter {
   error_handler: Handle<ErrorHandler>,

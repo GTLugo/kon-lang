@@ -1,6 +1,6 @@
 use std::{iter::Peekable, slice::Iter};
 
-use super::token::Token;
+use crate::interpreter::grammar::token::Token;
 
 #[derive(Debug, Clone)]
 pub enum Next<T> {

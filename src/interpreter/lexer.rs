@@ -1,13 +1,10 @@
 use foxy_utils::types::handle::Handle;
 
 use super::{
-  character_provider::CharacterProvider,
-  token::{Literal, Symbol},
+  grammar::{literal::Literal, symbol::Symbol, token::Token},
+  util::character_provider::CharacterProvider,
 };
-use crate::{
-  error::{error_handler::ErrorHandler, InterpreterError},
-  interpreter::token::Token,
-};
+use crate::error::{error_handler::ErrorHandler, InterpreterError};
 
 pub struct Lexer {
   error_handler: Handle<ErrorHandler>,
