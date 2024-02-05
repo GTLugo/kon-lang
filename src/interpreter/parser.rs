@@ -2,12 +2,7 @@ use enumflags2::BitFlags;
 use foxy_utils::types::handle::Handle;
 
 use super::{grammar::{
-  keyword::Keyword,
-  literal::Literal,
-  symbol::Symbol,
-  token::{Token, TokenDiscriminants},
-  Expression,
-  SyntaxTree,
+  expression::Expression, keyword::Keyword, literal::Literal, symbol::Symbol, syntax_tree::SyntaxTree, token::{Token, TokenDiscriminants}
 }, util::token_provider::{Next, TokenProvider}};
 use crate::error::{error_handler::ErrorHandler, InterpreterError};
 

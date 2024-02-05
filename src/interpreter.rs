@@ -1,6 +1,6 @@
 use foxy_utils::types::handle::Handle;
 
-use self::{grammar::SyntaxTree, lexer::Lexer, parser::Parser};
+use self::{grammar::syntax_tree::SyntaxTree, lexer::Lexer, parser::Parser};
 use crate::error::{error_handler::ErrorHandler, KonError};
 
 mod grammar;
