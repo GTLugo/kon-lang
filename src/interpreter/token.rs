@@ -94,6 +94,16 @@ impl Token {
         column,
         keyword: Keyword::Import,
       }),
+      Keyword::EXPORT => Some(Token::Keyword {
+        line,
+        column,
+        keyword: Keyword::Export,
+      }),
+      Keyword::PUBLIC => Some(Token::Keyword {
+        line,
+        column,
+        keyword: Keyword::Public,
+      }),
       Keyword::TYPE => Some(Token::Keyword {
         line,
         column,
@@ -109,11 +119,11 @@ impl Token {
         column,
         keyword: Keyword::As,
       }),
-      // Keyword::VOID => Some(Token::Keyword {
-      //   line,
-      //   column,
-      //   keyword: Keyword::Void,
-      // }),
+      Keyword::TRAIT => Some(Token::Keyword {
+        line,
+        column,
+        keyword: Keyword::Trait,
+      }),
       _ => None,
     }
   }
@@ -243,12 +253,11 @@ pub enum Keyword {
   Type,
   Impl,
   As,
-  // Void,
+  Trait,
 }
 
 impl Keyword {
   pub const AS: &'static str = "as";
-  pub const SELF_TYPE: &'static str = "Self";
   pub const ELSE: &'static str = "else";
   pub const EXPORT: &'static str = "export";
   pub const FOR: &'static str = "for";
@@ -259,9 +268,10 @@ impl Keyword {
   pub const PUBLIC: &'static str = "pub";
   pub const RETURN: &'static str = "return";
   pub const SELF: &'static str = "self";
+  pub const SELF_TYPE: &'static str = "Self";
   pub const SUPER: &'static str = "super";
+  pub const TRAIT: &'static str = "trait";
   pub const TYPE: &'static str = "type";
-  // pub const VOID: &'static str = "void";
   pub const WHILE: &'static str = "while";
 
   pub fn lexeme(&self) -> String {
@@ -281,7 +291,7 @@ impl Keyword {
       Keyword::Type => Keyword::TYPE.into(),
       Keyword::Impl => Keyword::IMPL.into(),
       Keyword::As => Keyword::AS.into(),
-      // Keyword::Void => Keyword::VOID.into(),
+      Keyword::Trait => Keyword::TRAIT.into(),
     }
   }
 }

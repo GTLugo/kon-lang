@@ -14,6 +14,7 @@ pub struct Interpreter {
   error_handler: Handle<ErrorHandler>,
   lexer: Lexer,
   parser: Parser,
+  show_tokens: bool,
   tree: Option<SyntaxTree>,
 }
 
@@ -33,6 +34,7 @@ impl Interpreter {
       error_handler,
       lexer,
       parser,
+      show_tokens: false,
       tree: None,
     }
   }
@@ -40,6 +42,11 @@ impl Interpreter {
   pub fn run(&mut self, source: String) -> Result<String, KonError> {
     self.error_handler.get_mut().clear();
     let tokens = self.lexer.lex(&source);
+
+    if self.show_tokens {
+      println!("{tokens:#?}");
+      self.show_tokens = false;
+    }
 
     self.tree = Some(self.parser.parse(&tokens));
 
@@ -66,5 +73,9 @@ impl Interpreter {
     } else {
       println!("None");
     }
+  }
+
+  pub fn show_next_tokens(&mut self) {
+    self.show_tokens = true;
   }
 }

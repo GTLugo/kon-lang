@@ -23,15 +23,21 @@ alias     = "build"
 
 [tasks.build]
 workspace    = false
-command      = "cargo"
-args         = ["build"]
-dependencies = ["copy-resources"]
+dependencies = ["build-debug", "build-release"]
+
+[tasks.build-debug]
+workspace          = false
+command            = "cargo"
+args               = ["build"]
+dependencies       = ["copy-resources"]
+condition.profiles = ["development"]
 
 [tasks.build-release]
-workspace    = false
-command      = "cargo"
-args         = ["build", "--release"]
-dependencies = ["copy-resources"]
+workspace          = false
+command            = "cargo"
+args               = ["build", "--release"]
+dependencies       = ["copy-resources"]
+condition.profiles = ["release"]
 
 ### RUN ###
 
@@ -39,13 +45,13 @@ dependencies = ["copy-resources"]
 workspace    = false
 command      = "${CARGO_MAKE_RUN_TARGET_DIR}/${CARGO_MAKE_RUN_TARGET}"
 args         = ["-i"]
-dependencies = ["copy-resources"]
+dependencies = ["build"]
 
 [tasks.run-file]
 workspace    = false
 command      = "${CARGO_MAKE_RUN_TARGET_DIR}/${CARGO_MAKE_RUN_TARGET}"
 args         = ["-f./assets/test.kon"]
-dependencies = ["copy-resources"]
+dependencies = ["build"]
 
 ### OTHER ###
 

@@ -3,6 +3,7 @@ use std::{fs, io::Write};
 use clap::Parser;
 use foxy_utils::start_debug_logging_session;
 use kon::{error::KonError, interpreter::Interpreter};
+use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 
 use self::cli::Cli;
 
@@ -37,10 +38,11 @@ fn run_file(flags: Cli) -> Result<(), KonError> {
 fn run_prompt() -> Result<(), KonError> {
   let mut interpreter = Interpreter::new();
 
+  let mut out = StandardStream::stdout(termcolor::ColorChoice::Always);
+  let mut was_success = true;
   loop {
     // Print
-    println!();
-    print_prompt()?;
+    print_prompt(&mut out, was_success)?;
 
     // Read
     let mut buffer = String::new();
@@ -52,21 +54,36 @@ fn run_prompt() -> Result<(), KonError> {
       continue;
     }
 
+    if buffer.trim_end() == "#nexttokens" {
+      interpreter.show_next_tokens();
+      continue;
+    }
+
     match interpreter.run(buffer) {
       Ok(result) => {
-        println!("{result}");
+        was_success = true;
+        writeln!(out, "{result}")?;
       }
       Err(error) => {
+        was_success = false;
+        out.set_color(ColorSpec::new().set_fg(Some(Color::Red)).set_bold(true))?;
         if let KonError::InterpreterErrors(..) = error {
-          println!("{}", error);
+          writeln!(out, "{error}")?;
         }
+        out.reset()?;
       }
     };
   }
 }
 
-fn print_prompt() -> Result<(), KonError> {
-  print!("$ ");
+fn print_prompt(out: &mut StandardStream, was_success: bool) -> Result<(), KonError> {
+  if was_success {
+    out.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
+  } else {
+    out.set_color(ColorSpec::new().set_fg(Some(Color::Red)).set_bold(true))?;
+  }
+  write!(out, "\n$ ")?;
+  out.reset()?;
   std::io::stdout().flush()?;
 
   Ok(())
