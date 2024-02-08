@@ -51,12 +51,12 @@ fn run_prompt() -> Result<(), KonError> {
     std::io::stdin().read_line(&mut buffer)?;
 
     // Evaluate
-    if buffer.trim_end() == "#ast" {
+    if buffer.trim_end() == "#showast" {
       interpreter.show_tree();
       continue;
     }
 
-    if buffer.trim_end() == "#nexttokens" {
+    if buffer.trim_end() == "#showtokens" {
       interpreter.show_next_tokens();
       continue;
     }

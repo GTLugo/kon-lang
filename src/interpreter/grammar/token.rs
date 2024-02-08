@@ -1,4 +1,7 @@
-use std::fmt::{Display, Formatter};
+use std::{
+  any::Any,
+  fmt::{Display, Formatter},
+};
 
 use strum::EnumDiscriminants;
 
@@ -14,6 +17,15 @@ pub enum Token {
   Literal(LiteralToken),
   EndOfFile { line: u32, column: u32 },
   Invalid { error: InterpreterError },
+}
+
+impl Token {
+  pub fn value(&self) -> Option<Box<dyn Any>> {
+    match self {
+      Token::Literal(token) => Some(token.literal.value()),
+      _ => None,
+    }
+  }
 }
 
 #[derive(Debug, Clone, PartialEq)]

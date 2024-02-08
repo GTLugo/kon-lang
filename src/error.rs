@@ -37,6 +37,8 @@ pub enum InterpreterError {
   EOFError { line: u32, column: u32, message: String },
   #[error("Unmatched `{delimiter}` ({line}, {column})")]
   UnmatchedDelimiter { line: u32, column: u32, delimiter: String },
+  #[error("Unknown operator `{operator}` ({line}, {column})")]
+  UnknownOperator { line: u32, column: u32, operator: String },
   #[error("{0}")]
   Other(String),
 }

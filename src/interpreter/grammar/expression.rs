@@ -27,92 +27,81 @@ pub enum Expression {
   Grouping {
     operand: Box<Expression>,
   },
-  Invalid {
-    token: Option<Token>,
-  },
 }
 
 impl Expression {
-  pub fn evaluate(&self) -> Result<Box<dyn Any>, InterpreterError> {
-    match self {
-      Expression::Literal { token } => match token.literal.clone() {
-        Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
-        Literal::String { lexeme } => Ok(Box::new(lexeme)),
-        Literal::Number { lexeme } => Ok(Box::new(lexeme)),
-        Literal::Void => Ok(Box::new(())),
-      },
-      Expression::Unary { operator, operand } => {
-        let value = operand.evaluate()?;
+  // pub fn evaluate(&self) -> Result<Box<dyn Any>, InterpreterError> {
+  //   match self {
+  //     Expression::Literal { token } => match token.literal.clone() {
+  //       Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
+  //       Literal::String { lexeme } => Ok(Box::new(lexeme)),
+  //       Literal::Number { lexeme } => Ok(Box::new(lexeme)),
+  //       Literal::Void => Ok(Box::new(())),
+  //     },
+  //     Expression::Unary { operator, operand } => {
+  //       let value = operand.evaluate()?;
 
-        if value.type_id() == TypeId::of::<i64>() {
-          let Some(&value) = value.downcast_ref::<i64>() else {
-            unreachable!()
-          };
+  //       if value.type_id() == TypeId::of::<i64>() {
+  //         let Some(&value) = value.downcast_ref::<i64>() else {
+  //           unreachable!()
+  //         };
 
-          return match operator.symbol {
-            Symbol::Minus => Ok(Box::new(-value)),
-            _ => Err(InterpreterError::SyntaxError {
-              line: operator.line,
-              column: operator.column,
-              message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
-            }),
-          };
-        } else if value.type_id() == TypeId::of::<String>() {
-          return Err(InterpreterError::SyntaxError {
-            line: operator.line,
-            column: operator.column,
-            message: format!("cannot perform `{}` on string", operator.symbol.lexeme()),
-          });
-        }
+  //         return match operator.symbol {
+  //           Symbol::Minus => Ok(Box::new(-value)),
+  //           _ => Err(InterpreterError::SyntaxError {
+  //             line: operator.line,
+  //             column: operator.column,
+  //             message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
+  //           }),
+  //         };
+  //       } else if value.type_id() == TypeId::of::<String>() {
+  //         return Err(InterpreterError::SyntaxError {
+  //           line: operator.line,
+  //           column: operator.column,
+  //           message: format!("cannot perform `{}` on string", operator.symbol.lexeme()),
+  //         });
+  //       }
 
-        Err(InterpreterError::Other("expected unary expression".to_string()))
-      }
-      Expression::Binary {
-        operator,
-        left_operand,
-        right_operand,
-      } => {
-        let left_value = left_operand.evaluate()?;
-        let right_value = right_operand.evaluate()?;
+  //       Err(InterpreterError::Other("expected unary expression".to_string()))
+  //     }
+  //     Expression::Binary {
+  //       operator,
+  //       left_operand,
+  //       right_operand,
+  //     } => {
+  //       let left_value = left_operand.evaluate()?;
+  //       let right_value = right_operand.evaluate()?;
 
-        if let (Some(left), Some(right)) = (left_value.downcast_ref::<i64>(), right_value.downcast_ref::<i64>()) {
-          return match operator.symbol {
-            Symbol::Plus => Ok(Box::new(left + right)),
-            Symbol::Minus => Ok(Box::new(left - right)),
-            Symbol::Asterisk => Ok(Box::new(left * right)),
-            Symbol::ForwardSlash => Ok(Box::new(left / right)),
-            _ => Err(InterpreterError::SyntaxError {
-              line: operator.line,
-              column: operator.column,
-              message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
-            }),
-          };
-        }
+  //       if let (Some(left), Some(right)) = (left_value.downcast_ref::<i64>(), right_value.downcast_ref::<i64>()) {
+  //         return match operator.symbol {
+  //           Symbol::Plus => Ok(Box::new(left + right)),
+  //           Symbol::Minus => Ok(Box::new(left - right)),
+  //           Symbol::Asterisk => Ok(Box::new(left * right)),
+  //           Symbol::ForwardSlash => Ok(Box::new(left / right)),
+  //           _ => Err(InterpreterError::SyntaxError {
+  //             line: operator.line,
+  //             column: operator.column,
+  //             message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
+  //           }),
+  //         };
+  //       }
 
-        if let (Some(left), Some(right)) = (left_value.downcast_ref::<String>(), right_value.downcast_ref::<String>()) {
-          return match operator.symbol {
-            Symbol::Plus => Ok(Box::new(format!("{left}{right}"))),
-            _ => Err(InterpreterError::SyntaxError {
-              line: operator.line,
-              column: operator.column,
-              message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
-            }),
-          };
-        }
+  //       if let (Some(left), Some(right)) = (left_value.downcast_ref::<String>(), right_value.downcast_ref::<String>()) {
+  //         return match operator.symbol {
+  //           Symbol::Plus => Ok(Box::new(format!("{left}{right}"))),
+  //           _ => Err(InterpreterError::SyntaxError {
+  //             line: operator.line,
+  //             column: operator.column,
+  //             message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
+  //           }),
+  //         };
+  //       }
 
-        Err(InterpreterError::Other("expected binary expression".to_string()))
-      }
-      Expression::Grouping { operand } => operand.evaluate(),
-      Expression::Invalid { .. } => Expression::Literal {
-        token: LiteralToken {
-          line: 0,
-          column: 0,
-          literal: Literal::Void,
-        },
-      }
-      .evaluate(),
-    }
-  }
+  //       Err(InterpreterError::Other("expected binary expression".to_string()))
+  //     }
+  //     Expression::Grouping { operand } => operand.evaluate(),
+  //   }
+  // }
 
   pub fn pretty_print(&self, indent: usize, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     const INCREMENT: usize = 2;
@@ -138,7 +127,6 @@ impl Expression {
         writeln!(f, "Grouping")?;
         operand.pretty_print(indent + INCREMENT, f)?;
       }
-      Expression::Invalid { token } => writeln!(f, "[Invalid] token?: {token:?}")?,
     }
 
     Ok(())

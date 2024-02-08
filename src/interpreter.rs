@@ -1,6 +1,10 @@
 use foxy_utils::types::handle::Handle;
 
-use self::{grammar::syntax_tree::SyntaxTree, lexer::Lexer, parser::Parser};
+use self::{
+  grammar::{binding::binder::Binder, syntax_tree::SyntaxTree},
+  lexer::Lexer,
+  parser::Parser,
+};
 use crate::error::{error_handler::ErrorHandler, KonError};
 
 mod grammar;
@@ -10,10 +14,13 @@ mod util;
 
 pub struct Interpreter {
   error_handler: Handle<ErrorHandler>,
+
   lexer: Lexer,
   parser: Parser,
+  binder: Binder,
+
   show_tokens: bool,
-  tree: Option<SyntaxTree>,
+  show_tree: bool,
 }
 
 impl Default for Interpreter {
@@ -27,13 +34,15 @@ impl Interpreter {
     let error_handler = Handle::new(ErrorHandler::new());
     let lexer = Lexer::new(error_handler.clone());
     let parser = Parser::new(error_handler.clone());
+    let binder = Binder::new(error_handler.clone());
 
     Self {
       error_handler,
       lexer,
       parser,
+      binder,
       show_tokens: false,
-      tree: None,
+      show_tree: false,
     }
   }
 
@@ -46,13 +55,20 @@ impl Interpreter {
       self.show_tokens = false;
     }
 
-    self.tree = Some(self.parser.parse(&tokens));
+    let tree = self.parser.parse(&tokens);
+
+    if self.show_tree {
+      print!("{}", tree); // tree has trailing newline due to recursive impl
+      self.show_tree = false;
+    }
+
+    let bound_tree = self.binder.bind(tree.root);
 
     self.error_handler.get().try_report_errors()?;
 
     // print!("Result: ");
 
-    if let Ok(result) = self.tree.as_ref().unwrap().root.evaluate() {
+    if let Ok(result) = bound_tree.evaluate() {
       if let Some(&value) = result.downcast_ref::<i64>() {
         return Ok(value.to_string());
       }
@@ -65,12 +81,8 @@ impl Interpreter {
     Err(KonError::Evaluation("invalid types".into()))
   }
 
-  pub fn show_tree(&self) {
-    if let Some(tree) = self.tree.as_ref() {
-      print!("{}", tree); // tree has trailing newline due to recursive impl
-    } else {
-      println!("None");
-    }
+  pub fn show_tree(&mut self) {
+    self.show_tree = true;
   }
 
   pub fn show_next_tokens(&mut self) {

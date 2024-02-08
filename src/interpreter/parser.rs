@@ -321,12 +321,12 @@ impl Parser {
           message: format!("Expected expression but got `{}`", tokens.previous_valid()),
         });
 
-        Expression::Invalid {
-          token: Some(Token::Literal(LiteralToken {
+        Expression::Literal {
+          token: LiteralToken {
             line: token.line(),
             column: token.column(),
             literal: Literal::Void,
-          })),
+          },
         }
       }
       Next::EndOfFile { line, column } => {
@@ -336,12 +336,13 @@ impl Parser {
           column: prev.column() + prev.lexeme().len() as u32,
           message: format!("Expected expression after `{}`", prev),
         });
-        Expression::Invalid {
-          token: Some(Token::Literal(LiteralToken {
+        
+        Expression::Literal {
+          token: LiteralToken {
             line,
             column,
             literal: Literal::Void,
-          })),
+          },
         }
       }
       Next::EndOfStream { line, column } => {
@@ -351,12 +352,13 @@ impl Parser {
           column: prev.column() + prev.lexeme().len() as u32,
           message: format!("Expected expression after `{}`", prev),
         });
-        Expression::Invalid {
-          token: Some(Token::Literal(LiteralToken {
+        
+        Expression::Literal {
+          token: LiteralToken {
             line,
             column,
             literal: Literal::Void,
-          })),
+          },
         }
       }
     }
