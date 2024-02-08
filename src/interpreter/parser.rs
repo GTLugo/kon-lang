@@ -1,9 +1,18 @@
 use enumflags2::BitFlags;
 use foxy_utils::types::handle::Handle;
+use tracing::debug;
 
-use super::{grammar::{
-  expression::Expression, keyword::Keyword, literal::Literal, symbol::Symbol, syntax_tree::SyntaxTree, token::{Token, TokenDiscriminants}
-}, util::token_provider::{Next, TokenProvider}};
+use super::{
+  grammar::{
+    expression::Expression,
+    keyword::Keyword,
+    literal::Literal,
+    symbol::Symbol,
+    syntax_tree::SyntaxTree,
+    token::{KeywordToken, LiteralToken, SymbolToken, Token, TokenDiscriminants},
+  },
+  util::token_provider::{Next, TokenProvider},
+};
 use crate::error::{error_handler::ErrorHandler, InterpreterError};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -50,7 +59,7 @@ impl TryFrom<Token> for Delimiter {
   type Error = ();
 
   fn try_from(token: Token) -> Result<Self, Self::Error> {
-    let Token::Symbol { symbol, .. } = token else {
+    let Token::Symbol(SymbolToken { symbol, .. }) = token else {
       return Err(());
     };
 
@@ -137,11 +146,11 @@ impl Parser {
     !self.delimiter_stack.ends_with(&[delim])
   }
 
-  fn match_token(&mut self, tokens: &mut TokenProvider, types: BitFlags<TokenDiscriminants>) -> Option<Token> {
+  fn match_token_types(&mut self, tokens: &mut TokenProvider, types: BitFlags<TokenDiscriminants>) -> Option<Token> {
     let mut peeked = tokens.peek();
-
+    // check for rogue delimiters
     if self.is_rogue_delimiter(peeked.clone()) {
-      let Next::Token(&Token::Symbol { line, column, symbol }) = peeked else {
+      let Next::Token(&Token::Symbol(SymbolToken { line, column, symbol })) = peeked else {
         return None;
       };
       self.error(InterpreterError::UnmatchedDelimiter {
@@ -153,12 +162,13 @@ impl Parser {
       peeked = tokens.peek();
     }
 
+    // check if no tokens
     let Next::Token(peeked) = peeked else {
       return None;
     };
 
+    // check if matches params
     let discrm = TokenDiscriminants::from(peeked);
-
     if types.contains(discrm) {
       Some(peeked.clone())
     } else {
@@ -166,12 +176,16 @@ impl Parser {
     }
   }
 
-  fn match_symbol(&self, token: &Token, types: BitFlags<Symbol>) -> bool {
-    let Token::Symbol { symbol, .. } = token else {
-      return false;
-    };
+  fn match_symbols(&mut self, tokens: &mut TokenProvider, types: BitFlags<Symbol>) -> Option<SymbolToken> {
+    if let Some(Token::Symbol(symbol_token)) = self.match_token_types(tokens, TokenDiscriminants::Symbol.into()) {
+      if types.contains(symbol_token.symbol) {
+        if let Next::Token(Token::Symbol(symbol_token)) = tokens.next() {
+          return Some(symbol_token.clone());
+        }
+      }
+    }
 
-    types.contains(*symbol)
+    None
   }
 
   fn expression(&mut self, tokens: &mut TokenProvider) -> Expression {
@@ -181,21 +195,13 @@ impl Parser {
   fn equality(&mut self, tokens: &mut TokenProvider) -> Expression {
     let mut expression = self.comparison(tokens);
 
-    while {
-      if let Some(token) = self.match_token(tokens, TokenDiscriminants::Symbol.into()) {
-        self.match_symbol(&token, Symbol::DoubleEquals | Symbol::ExclamationPointEquals)
-      } else {
-        false
-      }
-    } {
-      if let Next::Token(operator) = tokens.next().cloned() {
-        let right_operand = Box::new(self.comparison(tokens));
-        expression = Expression::Binary {
-          left_operand: Box::new(expression),
-          operator,
-          right_operand,
-        };
-      }
+    while let Some(operator) = self.match_symbols(tokens, Symbol::DoubleEquals | Symbol::ExclamationPointEquals) {
+      let right_operand = Box::new(self.comparison(tokens));
+      expression = Expression::Binary {
+        left_operand: Box::new(expression),
+        operator,
+        right_operand,
+      };
     }
 
     expression
@@ -204,25 +210,19 @@ impl Parser {
   fn comparison(&mut self, tokens: &mut TokenProvider) -> Expression {
     let mut expression = self.term(tokens);
 
-    while if let Some(token) = self.match_token(tokens, TokenDiscriminants::Symbol.into()) {
-      self.match_symbol(
-        &token,
-        Symbol::LeftAngledBracket
-          | Symbol::RightAngledBracket
-          | Symbol::LeftAngledBracketEquals
-          | Symbol::RightAngledBracketEquals,
-      )
-    } else {
-      false
-    } {
-      if let Next::Token(operator) = tokens.next().cloned() {
-        let right_operand = Box::new(self.term(tokens));
-        expression = Expression::Binary {
-          left_operand: Box::new(expression),
-          operator,
-          right_operand,
-        };
-      }
+    while let Some(operator) = self.match_symbols(
+      tokens,
+      Symbol::LeftAngledBracket
+        | Symbol::RightAngledBracket
+        | Symbol::LeftAngledBracketEquals
+        | Symbol::RightAngledBracketEquals,
+    ) {
+      let right_operand = Box::new(self.term(tokens));
+      expression = Expression::Binary {
+        left_operand: Box::new(expression),
+        operator,
+        right_operand,
+      };
     }
 
     expression
@@ -231,76 +231,52 @@ impl Parser {
   fn term(&mut self, tokens: &mut TokenProvider) -> Expression {
     let mut expression = self.factor(tokens);
 
-    while if let Some(token) = self.match_token(tokens, TokenDiscriminants::Symbol.into()) {
-      self.match_symbol(&token, Symbol::Plus | Symbol::Minus)
-    } else {
-      false
-    } {
-      if let Next::Token(operator) = tokens.next().cloned() {
-        let right_operand = Box::new(self.factor(tokens));
-        expression = Expression::Binary {
-          left_operand: Box::new(expression),
-          operator,
-          right_operand,
-        };
-      }
+    while let Some(operator) = self.match_symbols(tokens, Symbol::Plus | Symbol::Minus) {
+      let right_operand = Box::new(self.factor(tokens));
+      expression = Expression::Binary {
+        left_operand: Box::new(expression),
+        operator,
+        right_operand,
+      };
     }
 
     expression
   }
 
   fn factor(&mut self, tokens: &mut TokenProvider) -> Expression {
-    let mut expression = self.power(tokens);
-
-    while if let Some(token) = self.match_token(tokens, TokenDiscriminants::Symbol.into()) {
-      self.match_symbol(&token, Symbol::Asterisk | Symbol::ForwardSlash)
-    } else {
-      false
-    } {
-      if let Next::Token(operator) = tokens.next().cloned() {
-        let right_operand = Box::new(self.power(tokens));
-        expression = Expression::Binary {
-          left_operand: Box::new(expression),
-          operator,
-          right_operand,
-        };
-      }
-    }
-
-    expression
-  }
-
-  fn power(&mut self, tokens: &mut TokenProvider) -> Expression {
     let mut expression = self.unary(tokens);
 
-    while if let Some(token) = self.match_token(tokens, TokenDiscriminants::Symbol.into()) {
-      self.match_symbol(&token, Symbol::Caret.into())
-    } else {
-      false
-    } {
-      if let Next::Token(operator) = tokens.next().cloned() {
-        let right_operand = Box::new(self.unary(tokens));
-        expression = Expression::Binary {
-          left_operand: Box::new(expression),
-          operator,
-          right_operand,
-        };
-      }
+    while let Some(operator) = self.match_symbols(tokens, Symbol::Asterisk | Symbol::ForwardSlash) {
+      let right_operand = Box::new(self.unary(tokens));
+      expression = Expression::Binary {
+        left_operand: Box::new(expression),
+        operator,
+        right_operand,
+      };
     }
 
     expression
   }
 
+  // fn power(&mut self, tokens: &mut TokenProvider) -> Expression {
+  //   let mut expression = self.unary(tokens);
+
+  //   while let Some(operator) = self.match_symbols(tokens, Symbol::Caret.into())
+  // {     let right_operand = Box::new(self.unary(tokens));
+  //     expression = Expression::Binary {
+  //       left_operand: Box::new(expression),
+  //       operator,
+  //       right_operand,
+  //     };
+  //   }
+
+  //   expression
+  // }
+
   fn unary(&mut self, tokens: &mut TokenProvider) -> Expression {
-    if if let Some(token) = self.match_token(tokens, TokenDiscriminants::Symbol.into()) {
-      self.match_symbol(&token, Symbol::ExclamationPoint | Symbol::Minus)
-    } else {
-      false
-    } {
-      if let Next::Token(operator) = tokens.next().cloned() {
-        let operand = Box::new(self.unary(tokens));
-        return Expression::Unary { operator, operand };
-      }
+    if let Some(operator) = self.match_symbols(tokens, Symbol::ExclamationPoint | Symbol::Minus) {
+      let operand = Box::new(self.unary(tokens));
+      return Expression::Unary { operator, operand };
     }
 
     self.primary(tokens)
@@ -311,11 +287,8 @@ impl Parser {
     match next_token {
       Next::Token(token) => {
         match &token {
-          Token::Literal { literal, .. } => match literal {
-            Literal::String { .. } | Literal::Number { .. } => return Expression::Literal { token: token.clone() },
-            _ => {}
-          },
-          Token::Symbol { line, column, symbol } => match symbol {
+          Token::Literal(token) => return Expression::Literal { token: token.clone() },
+          Token::Symbol(SymbolToken { line, column, symbol }) => match symbol {
             Symbol::LeftParenthesis => {
               self.delimiter_stack.push(Delimiter {
                 delimiter: DelimiterType::Paren,
@@ -349,11 +322,11 @@ impl Parser {
         });
 
         Expression::Invalid {
-          token: Some(Token::Literal {
+          token: Some(Token::Literal(LiteralToken {
             line: token.line(),
             column: token.column(),
             literal: Literal::Void,
-          }),
+          })),
         }
       }
       Next::EndOfFile { line, column } => {
@@ -364,11 +337,11 @@ impl Parser {
           message: format!("Expected expression after `{}`", prev),
         });
         Expression::Invalid {
-          token: Some(Token::Literal {
+          token: Some(Token::Literal(LiteralToken {
             line,
             column,
             literal: Literal::Void,
-          }),
+          })),
         }
       }
       Next::EndOfStream { line, column } => {
@@ -379,11 +352,11 @@ impl Parser {
           message: format!("Expected expression after `{}`", prev),
         });
         Expression::Invalid {
-          token: Some(Token::Literal {
+          token: Some(Token::Literal(LiteralToken {
             line,
             column,
             literal: Literal::Void,
-          }),
+          })),
         }
       }
     }
@@ -397,11 +370,11 @@ impl Parser {
           if matches {
             token
           } else {
-            let delimiter = Token::Symbol {
+            let delimiter = Token::Symbol(SymbolToken {
               line: token.line(),
               column: token.column(),
               symbol: delimiter,
-            };
+            });
             self.error(InterpreterError::UnmatchedDelimiter {
               line: unmatched.line(),
               column: unmatched.column(),
@@ -411,11 +384,11 @@ impl Parser {
           }
         }
         Next::EndOfFile { line, column } | Next::EndOfStream { line, column } => {
-          let delimiter = Token::Symbol {
+          let delimiter = Token::Symbol(SymbolToken {
             line,
             column,
             symbol: delimiter,
-          };
+          });
           self.error(InterpreterError::UnmatchedDelimiter {
             line: unmatched.line(),
             column: unmatched.column(),
@@ -425,11 +398,11 @@ impl Parser {
         }
       },
       Err((line, column)) => {
-        let delimiter = Token::Symbol {
+        let delimiter = Token::Symbol(SymbolToken {
           line,
           column,
           symbol: delimiter,
-        };
+        });
         self.error(InterpreterError::UnmatchedDelimiter {
           line: unmatched.line(),
           column: unmatched.column(),
@@ -442,7 +415,7 @@ impl Parser {
 
   fn check_delimiter(&mut self, tokens: &mut TokenProvider, delimiter: &Symbol) -> Result<bool, (u32, u32)> {
     match tokens.peek() {
-      Next::Token(Token::Symbol { symbol, .. }) => Ok(symbol == delimiter),
+      Next::Token(Token::Symbol(symbol_token)) => Ok(symbol_token.symbol == *delimiter),
       Next::Token(token) => Err((token.line(), token.column())),
       Next::EndOfFile { line, column } | Next::EndOfStream { line, column } => Err((line, column)),
     }
@@ -456,23 +429,29 @@ impl Parser {
   fn synchronize(&mut self, tokens: &mut TokenProvider) {
     let mut token = tokens.next();
     while let Next::Token(next_token) = token {
-      if matches!(next_token, Token::Symbol {
-        symbol: Symbol::Semicolon,
-        ..
-      }) {
+      if matches!(
+        next_token,
+        Token::Symbol(SymbolToken {
+          symbol: Symbol::Semicolon,
+          ..
+        })
+      ) {
         return;
       }
 
-      if matches!(next_token, Token::Keyword {
-        keyword: Keyword::If
-          | Keyword::For
-          | Keyword::While
-          | Keyword::Loop
-          | Keyword::Return
-          | Keyword::Type
-          | Keyword::Impl,
-        ..
-      }) {
+      if matches!(
+        next_token,
+        Token::Keyword(KeywordToken {
+          keyword: Keyword::If
+            | Keyword::For
+            | Keyword::While
+            | Keyword::Loop
+            | Keyword::Return
+            | Keyword::Type
+            | Keyword::Impl,
+          ..
+        })
+      ) {
         return;
       }
 

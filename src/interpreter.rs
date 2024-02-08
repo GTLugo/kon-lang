@@ -53,7 +53,7 @@ impl Interpreter {
     // print!("Result: ");
 
     if let Ok(result) = self.tree.as_ref().unwrap().root.evaluate() {
-      if let Some(&value) = result.downcast_ref::<f64>() {
+      if let Some(&value) = result.downcast_ref::<i64>() {
         return Ok(value.to_string());
       }
 
@@ -62,7 +62,7 @@ impl Interpreter {
       }
     }
 
-    Err(KonError::Other("Failed to evaluate expression".into()))
+    Err(KonError::Evaluation("invalid types".into()))
   }
 
   pub fn show_tree(&self) {

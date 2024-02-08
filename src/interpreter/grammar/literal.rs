@@ -3,7 +3,7 @@ pub enum Literal {
   // Literals
   Identifier { lexeme: String },
   String { lexeme: String },
-  Number { lexeme: f64 },
+  Number { lexeme: i64 },
   Void,
 }
 

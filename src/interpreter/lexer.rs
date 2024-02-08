@@ -1,7 +1,11 @@
 use foxy_utils::types::handle::Handle;
 
 use super::{
-  grammar::{literal::Literal, symbol::Symbol, token::Token},
+  grammar::{
+    literal::Literal,
+    symbol::Symbol,
+    token::{LiteralToken, SymbolToken, Token},
+  },
   util::character_provider::CharacterProvider,
 };
 use crate::error::{error_handler::ErrorHandler, InterpreterError};
@@ -48,11 +52,11 @@ impl Lexer {
         return if let Some(reserved_word) = Token::reserved_word(&lexeme, characters.current_line(), start_of_lexeme) {
           Some(reserved_word)
         } else {
-          Some(Token::Literal {
+          Some(Token::Literal(LiteralToken {
             line: characters.current_line(),
             column: start_of_lexeme,
             literal: Literal::Identifier { lexeme },
-          })
+          }))
         };
       }
       digit if digit.is_ascii_digit() => {
@@ -62,12 +66,12 @@ impl Lexer {
         lexeme.push(digit);
         lexeme.push_str(&Self::read_lexeme_while(characters, |c| c.is_ascii_digit()));
 
-        return if let Ok(lexeme) = lexeme.parse::<f64>() {
-          Some(Token::Literal {
+        return if let Ok(lexeme) = lexeme.parse::<i64>() {
+          Some(Token::Literal(LiteralToken {
             line: characters.current_line(),
             column: start_of_lexeme,
             literal: Literal::Number { lexeme },
-          })
+          }))
         } else {
           Some(Token::Invalid {
             error: InterpreterError::SyntaxError {
@@ -82,245 +86,245 @@ impl Lexer {
         // symbols
         match symbol {
           ';' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::Semicolon,
-            })
+            }))
           }
           ',' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::Comma,
-            })
+            }))
           }
           '.' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::Period,
-            })
+            }))
           }
           ':' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::Colon,
-            })
+            }))
           }
           '!' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::ExclamationPointEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::ExclamationPoint,
-              })
+              }))
             };
           }
           '=' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::DoubleEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::Equals,
-              })
+              }))
             };
           }
           '+' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::PlusEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::Plus,
-              })
+              }))
             };
           }
           '-' => {
             return if Self::next_char_is(characters, '>') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::RightArrow,
-              })
+              }))
             } else if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::MinusEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::Minus,
-              })
+              }))
             };
           }
           '/' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::ForwardSlashEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::ForwardSlash,
-              })
+              }))
             };
           }
           '*' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::AsteriskEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::Asterisk,
-              })
+              }))
             };
           }
           '^' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::CaretEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::Caret,
-              })
+              }))
             };
           }
           '&' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::AmpersandEquals,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::Ampersand,
-              })
+              }))
             };
           }
           '(' => {
             return if Self::next_char_is(characters, ')') {
-              Some(Token::Literal {
+              Some(Token::Literal(LiteralToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 literal: Literal::Void,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::LeftParenthesis,
-              })
+              }))
             };
           }
           ')' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::RightParenthesis,
-            })
+            }))
           }
           '{' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::LeftCurlyBracket,
-            })
+            }))
           }
           '}' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::RightCurlyBracket,
-            })
+            }))
           }
           '<' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::LeftAngledBracket,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::LeftAngledBracketEquals,
-              })
+              }))
             };
           }
           '>' => {
             return if Self::next_char_is(characters, '=') {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::RightAngledBracket,
-              })
+              }))
             } else {
-              Some(Token::Symbol {
+              Some(Token::Symbol(SymbolToken {
                 line: characters.current_line(),
                 column: characters.current_column(),
                 symbol: Symbol::RightAngledBracketEquals,
-              })
+              }))
             };
           }
           '[' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::LeftSquareBracket,
-            })
+            }))
           }
           ']' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::RightSquareBracket,
-            })
+            }))
           }
           '\'' => {
-            return Some(Token::Symbol {
+            return Some(Token::Symbol(SymbolToken {
               line: characters.current_line(),
               column: characters.current_column(),
               symbol: Symbol::Apostrophe,
-            })
+            }))
           }
           '\"' => {
             let start_of_lexeme = characters.current_column();
@@ -335,11 +339,11 @@ impl Lexer {
                 } else {
                   characters.next().unwrap();
 
-                  return Some(Token::Literal {
+                  return Some(Token::Literal(LiteralToken {
                     line: characters.current_line(),
                     column: start_of_lexeme,
                     literal: Literal::String { lexeme },
-                  });
+                  }));
                 }
               }
             }

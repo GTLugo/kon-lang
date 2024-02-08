@@ -9,14 +9,12 @@ pub mod error_handler;
 pub enum KonError {
   #[error("interpreter caught {} error(s)", .0.len())]
   InterpreterErrors(Vec<InterpreterError>),
+  #[error("failed to evaluate expression: `{0}`")]
+  Evaluation(String),
   #[error("{0}")]
   IOError(#[from] io::Error),
   #[error("{0}")]
   Other(String),
-  #[error("feature not implemented")]
-  Unimplemented,
-  #[error("unspecified interpreter error")]
-  Unspecified,
 }
 
 impl Debug for KonError {
@@ -39,8 +37,8 @@ pub enum InterpreterError {
   EOFError { line: u32, column: u32, message: String },
   #[error("Unmatched `{delimiter}` ({line}, {column})")]
   UnmatchedDelimiter { line: u32, column: u32, delimiter: String },
-  #[error("Unspecified error")]
-  Unspecified,
+  #[error("{0}")]
+  Other(String),
 }
 
 impl InterpreterError {

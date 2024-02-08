@@ -1,20 +1,26 @@
-use std::{any::Any, fmt::Display};
+use std::{
+  any::{Any, TypeId},
+  fmt::Display,
+};
 
+use super::{
+  literal::Literal,
+  symbol::Symbol,
+  token::{LiteralToken, SymbolToken, Token},
+};
 use crate::error::InterpreterError;
-
-use super::{literal::Literal, symbol::Symbol, token::Token};
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
   Literal {
-    token: Token,
+    token: LiteralToken,
   },
   Unary {
-    operator: Token,
+    operator: SymbolToken,
     operand: Box<Expression>,
   },
   Binary {
-    operator: Token,
+    operator: SymbolToken,
     left_operand: Box<Expression>,
     right_operand: Box<Expression>,
   },
@@ -29,88 +35,76 @@ pub enum Expression {
 impl Expression {
   pub fn evaluate(&self) -> Result<Box<dyn Any>, InterpreterError> {
     match self {
-      Expression::Literal { token } => match token {
-        Token::Literal { literal, .. } => match literal.clone() {
-          Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
-          Literal::String { lexeme } => Ok(Box::new(lexeme)),
-          Literal::Number { lexeme } => Ok(Box::new(lexeme)),
-          Literal::Void => Ok(Box::new(())),
-        },
-        _ => unreachable!("only literals should enter this branch"),
+      Expression::Literal { token } => match token.literal.clone() {
+        Literal::Identifier { lexeme } => Ok(Box::new(lexeme)),
+        Literal::String { lexeme } => Ok(Box::new(lexeme)),
+        Literal::Number { lexeme } => Ok(Box::new(lexeme)),
+        Literal::Void => Ok(Box::new(())),
       },
       Expression::Unary { operator, operand } => {
-        let operator_symbol = match operator {
-          Token::Symbol { symbol, .. } => symbol,
-          _ => unreachable!("only symbols should enter this branch"),
-        };
-
         let value = operand.evaluate()?;
 
-        if let Some(&value) = value.downcast_ref::<f64>() {
-          return match operator_symbol {
+        if value.type_id() == TypeId::of::<i64>() {
+          let Some(&value) = value.downcast_ref::<i64>() else {
+            unreachable!()
+          };
+
+          return match operator.symbol {
             Symbol::Minus => Ok(Box::new(-value)),
             _ => Err(InterpreterError::SyntaxError {
-              line: operator.line(),
-              column: operator.column(),
-              message: format!("cannot perform `{}` on f64", operator_symbol.lexeme()),
+              line: operator.line,
+              column: operator.column,
+              message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
             }),
           };
-        }
-
-        if value.downcast_ref::<String>().is_some() {
+        } else if value.type_id() == TypeId::of::<String>() {
           return Err(InterpreterError::SyntaxError {
-            line: operator.line(),
-            column: operator.column(),
-            message: format!("cannot perform `{}` on string", operator_symbol.lexeme()),
+            line: operator.line,
+            column: operator.column,
+            message: format!("cannot perform `{}` on string", operator.symbol.lexeme()),
           });
         }
 
-        Err(InterpreterError::Unspecified)
+        Err(InterpreterError::Other("expected unary expression".to_string()))
       }
       Expression::Binary {
         operator,
         left_operand,
         right_operand,
       } => {
-        let operator_symbol = match operator {
-          Token::Symbol { symbol, .. } => symbol,
-          _ => unreachable!("only symbols should enter this branch"),
-        };
-
         let left_value = left_operand.evaluate()?;
         let right_value = right_operand.evaluate()?;
 
-        if let (Some(left), Some(right)) = (left_value.downcast_ref::<f64>(), right_value.downcast_ref::<f64>()) {
-          return match operator_symbol {
+        if let (Some(left), Some(right)) = (left_value.downcast_ref::<i64>(), right_value.downcast_ref::<i64>()) {
+          return match operator.symbol {
             Symbol::Plus => Ok(Box::new(left + right)),
             Symbol::Minus => Ok(Box::new(left - right)),
             Symbol::Asterisk => Ok(Box::new(left * right)),
             Symbol::ForwardSlash => Ok(Box::new(left / right)),
-            Symbol::Caret => Ok(Box::new(left.powf(*right))),
             _ => Err(InterpreterError::SyntaxError {
-              line: operator.line(),
-              column: operator.column(),
-              message: format!("cannot perform `{}` on f64", operator_symbol.lexeme()),
+              line: operator.line,
+              column: operator.column,
+              message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
             }),
           };
         }
 
         if let (Some(left), Some(right)) = (left_value.downcast_ref::<String>(), right_value.downcast_ref::<String>()) {
-          return match operator_symbol {
+          return match operator.symbol {
             Symbol::Plus => Ok(Box::new(format!("{left}{right}"))),
             _ => Err(InterpreterError::SyntaxError {
-              line: operator.line(),
-              column: operator.column(),
-              message: format!("cannot perform `{}` on f64", operator_symbol.lexeme()),
+              line: operator.line,
+              column: operator.column,
+              message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
             }),
           };
         }
 
-        Err(InterpreterError::Unspecified)
+        Err(InterpreterError::Other("expected binary expression".to_string()))
       }
       Expression::Grouping { operand } => operand.evaluate(),
       Expression::Invalid { .. } => Expression::Literal {
-        token: Token::Literal {
+        token: LiteralToken {
           line: 0,
           column: 0,
           literal: Literal::Void,

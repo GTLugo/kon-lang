@@ -30,6 +30,8 @@ fn run_file(flags: Cli) -> Result<(), KonError> {
     let result = interpreter.run(source)?;
 
     println!("{result}");
+
+    interpreter.show_tree();
   }
 
   Ok(())
@@ -67,9 +69,7 @@ fn run_prompt() -> Result<(), KonError> {
       Err(error) => {
         was_success = false;
         out.set_color(ColorSpec::new().set_fg(Some(Color::Red)).set_bold(true))?;
-        if let KonError::InterpreterErrors(..) = error {
-          writeln!(out, "{error}")?;
-        }
+        writeln!(out, "{error}")?;
         out.reset()?;
       }
     };
