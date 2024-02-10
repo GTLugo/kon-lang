@@ -1,6 +1,6 @@
-use crate::{
+use crate::interpreter::{
   error::InterpreterError,
-  interpreter::grammar::{symbol::Symbol, token::SymbolToken},
+  grammar::{symbol::Symbol, token::SymbolToken},
 };
 
 #[derive(Debug, PartialEq)]
@@ -17,8 +17,7 @@ impl TryFrom<SymbolToken> for BoundUnaryOperator {
       Symbol::Minus => Ok(Self::Negation),
       Symbol::ExclamationPoint => Ok(Self::Not),
       _ => Err(InterpreterError::UnknownOperator {
-        line: value.line,
-        column: value.column,
+        position: value.position,
         operator: value.symbol.lexeme(),
       }),
     }
@@ -55,8 +54,7 @@ impl TryFrom<SymbolToken> for BoundBinaryOperator {
       Symbol::DoubleEquals => Ok(Self::Equals),
       Symbol::ExclamationPointEquals => Ok(Self::NotEquals),
       _ => Err(InterpreterError::UnknownOperator {
-        line: value.line,
-        column: value.column,
+        position: value.position,
         operator: value.symbol.lexeme(),
       }),
     }

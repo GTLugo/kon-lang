@@ -1,20 +1,24 @@
 use std::{iter::Peekable, slice::Iter};
 
-use crate::interpreter::grammar::token::Token;
+use crate::interpreter::grammar::token::{Position, Token};
 
 #[derive(Debug, Clone)]
 pub enum Next<T> {
   Token(T),
-  EndOfFile { line: u32, column: u32 },
-  EndOfStream { line: u32, column: u32 },
+  EndOfFile { position: Position },
+  EndOfStream { position: Position },
 }
 
 impl<T: Clone> Next<&T> {
   pub fn cloned(&self) -> Next<T> {
-    match *self {
-      Next::Token(token) => Next::Token(token.clone()),
-      Next::EndOfFile { line, column } => Next::EndOfFile { line, column },
-      Next::EndOfStream { line, column } => Next::EndOfStream { line, column },
+    match self {
+      &Next::Token(token) => Next::Token(token.clone()),
+      Next::EndOfFile { position } => Next::EndOfFile {
+        position: position.clone(),
+      },
+      Next::EndOfStream { position } => Next::EndOfStream {
+        position: position.clone(),
+      },
     }
   }
 }
@@ -29,7 +33,9 @@ pub struct TokenProvider<'a> {
 impl<'a> TokenProvider<'a> {
   pub fn new(tokens: &'a [Token]) -> Self {
     Self {
-      previous_valid_token: Token::EndOfFile { line: 0, column: 0 },
+      previous_valid_token: Token::EndOfFile {
+        position: Position::default(),
+      },
       tokens: tokens.iter().peekable(),
       last_line: 0,
       last_column: 0,
@@ -39,19 +45,17 @@ impl<'a> TokenProvider<'a> {
   pub fn peek(&mut self) -> Next<&Token> {
     match self.tokens.peek() {
       Some(token) => match token {
-        Token::EndOfFile { line, column } => {
-          self.last_line = *line;
-          self.last_column = *column;
+        Token::EndOfFile { position } => {
+          self.last_line = position.line;
+          self.last_column = position.column;
           Next::EndOfFile {
-            line: *line,
-            column: *column,
+            position: position.clone(),
           }
         }
         &t => Next::Token(t),
       },
       None => Next::EndOfStream {
-        line: self.last_line,
-        column: self.last_column,
+        position: Position::new(self.last_line, self.last_column),
       },
     }
   }
@@ -63,15 +67,16 @@ impl<'a> TokenProvider<'a> {
   pub fn next(&mut self) -> Next<&Token> {
     match self.tokens.next() {
       Some(token) => match token {
-        &Token::EndOfFile { line, column } => Next::EndOfFile { line, column },
+        Token::EndOfFile { position } => Next::EndOfFile {
+          position: position.clone(),
+        },
         t => {
           self.previous_valid_token = t.clone();
           Next::Token(t)
         }
       },
       None => Next::EndOfStream {
-        line: self.last_line,
-        column: self.last_column,
+        position: Position::new(self.last_line, self.last_column),
       },
     }
   }

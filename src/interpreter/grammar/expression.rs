@@ -1,14 +1,6 @@
-use std::{
-  any::{Any, TypeId},
-  fmt::Display,
-};
+use std::fmt::Display;
 
-use super::{
-  literal::Literal,
-  symbol::Symbol,
-  token::{LiteralToken, SymbolToken, Token},
-};
-use crate::error::InterpreterError;
+use super::token::{LiteralToken, SymbolToken};
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
@@ -51,15 +43,15 @@ impl Expression {
   //           _ => Err(InterpreterError::SyntaxError {
   //             line: operator.line,
   //             column: operator.column,
-  //             message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
-  //           }),
+  //             message: format!("cannot perform `{}` on i64",
+  // operator.symbol.lexeme()),           }),
   //         };
   //       } else if value.type_id() == TypeId::of::<String>() {
   //         return Err(InterpreterError::SyntaxError {
   //           line: operator.line,
   //           column: operator.column,
-  //           message: format!("cannot perform `{}` on string", operator.symbol.lexeme()),
-  //         });
+  //           message: format!("cannot perform `{}` on string",
+  // operator.symbol.lexeme()),         });
   //       }
 
   //       Err(InterpreterError::Other("expected unary expression".to_string()))
@@ -72,8 +64,8 @@ impl Expression {
   //       let left_value = left_operand.evaluate()?;
   //       let right_value = right_operand.evaluate()?;
 
-  //       if let (Some(left), Some(right)) = (left_value.downcast_ref::<i64>(), right_value.downcast_ref::<i64>()) {
-  //         return match operator.symbol {
+  //       if let (Some(left), Some(right)) = (left_value.downcast_ref::<i64>(),
+  // right_value.downcast_ref::<i64>()) {         return match operator.symbol {
   //           Symbol::Plus => Ok(Box::new(left + right)),
   //           Symbol::Minus => Ok(Box::new(left - right)),
   //           Symbol::Asterisk => Ok(Box::new(left * right)),
@@ -81,19 +73,20 @@ impl Expression {
   //           _ => Err(InterpreterError::SyntaxError {
   //             line: operator.line,
   //             column: operator.column,
-  //             message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
-  //           }),
+  //             message: format!("cannot perform `{}` on i64",
+  // operator.symbol.lexeme()),           }),
   //         };
   //       }
 
-  //       if let (Some(left), Some(right)) = (left_value.downcast_ref::<String>(), right_value.downcast_ref::<String>()) {
+  //       if let (Some(left), Some(right)) =
+  // (left_value.downcast_ref::<String>(), right_value.downcast_ref::<String>()) {
   //         return match operator.symbol {
   //           Symbol::Plus => Ok(Box::new(format!("{left}{right}"))),
   //           _ => Err(InterpreterError::SyntaxError {
   //             line: operator.line,
   //             column: operator.column,
-  //             message: format!("cannot perform `{}` on i64", operator.symbol.lexeme()),
-  //           }),
+  //             message: format!("cannot perform `{}` on i64",
+  // operator.symbol.lexeme()),           }),
   //         };
   //       }
 

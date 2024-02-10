@@ -1,14 +1,14 @@
 use foxy_utils::types::handle::Handle;
 
 use super::{
+  error::{error_handler::ErrorHandler, InterpreterError},
   grammar::{
     literal::Literal,
     symbol::Symbol,
-    token::{LiteralToken, SymbolToken, Token},
+    token::{LiteralToken, Position, SymbolToken, Token},
   },
   util::character_provider::CharacterProvider,
 };
-use crate::error::{error_handler::ErrorHandler, InterpreterError};
 
 pub struct Lexer {
   error_handler: Handle<ErrorHandler>,
@@ -24,15 +24,14 @@ impl Lexer {
 
     let mut tokens = Vec::default();
     while let Some(token) = self.build_token(&mut characters) {
-      if let Token::Invalid { error } = &token {
+      if let Token::Invalid { error, .. } = &token {
         self.error_handler.get_mut().push(error.clone());
       }
       tokens.push(token);
     }
 
     tokens.push(Token::EndOfFile {
-      line: characters.current_line(),
-      column: characters.current_column(),
+      position: characters.current_position(),
     });
 
     tokens
@@ -49,12 +48,16 @@ impl Lexer {
         lexeme.push(letter);
         lexeme.push_str(&Self::read_lexeme_while(characters, |c| c.is_ascii_alphanumeric() || c == &'_'));
 
-        return if let Some(reserved_word) = Token::reserved_word(&lexeme, characters.current_line(), start_of_lexeme) {
+        return if let Some(reserved_word) =
+          Token::reserved_word(&lexeme, Position::new(characters.current_line(), start_of_lexeme))
+        {
           Some(reserved_word)
         } else {
           Some(Token::Literal(LiteralToken {
-            line: characters.current_line(),
-            column: start_of_lexeme,
+            position: Position {
+              line: characters.current_line(),
+              column: start_of_lexeme,
+            },
             literal: Literal::Identifier { lexeme },
           }))
         };
@@ -68,15 +71,17 @@ impl Lexer {
 
         return if let Ok(lexeme) = lexeme.parse::<i64>() {
           Some(Token::Literal(LiteralToken {
-            line: characters.current_line(),
-            column: start_of_lexeme,
+            position: Position {
+              line: characters.current_line(),
+              column: start_of_lexeme,
+            },
             literal: Literal::Number { lexeme },
           }))
         } else {
           Some(Token::Invalid {
+            position: characters.current_position(),
             error: InterpreterError::SyntaxError {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: characters.current_position(),
               message: "Failed to parse number".into(),
             },
           })
@@ -87,43 +92,55 @@ impl Lexer {
         match symbol {
           ';' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::Semicolon,
             }))
           }
           ',' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::Comma,
             }))
           }
           '.' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::Period,
             }))
           }
           ':' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::Colon,
             }))
           }
           '!' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::ExclamationPointEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::ExclamationPoint,
               }))
             };
@@ -131,14 +148,18 @@ impl Lexer {
           '=' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::DoubleEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::Equals,
               }))
             };
@@ -146,14 +167,18 @@ impl Lexer {
           '+' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::PlusEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::Plus,
               }))
             };
@@ -161,20 +186,26 @@ impl Lexer {
           '-' => {
             return if Self::next_char_is(characters, '>') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::RightArrow,
               }))
             } else if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::MinusEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::Minus,
               }))
             };
@@ -182,14 +213,18 @@ impl Lexer {
           '/' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::ForwardSlashEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::ForwardSlash,
               }))
             };
@@ -197,14 +232,18 @@ impl Lexer {
           '*' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::AsteriskEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::Asterisk,
               }))
             };
@@ -212,14 +251,18 @@ impl Lexer {
           '^' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::CaretEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::Caret,
               }))
             };
@@ -227,14 +270,18 @@ impl Lexer {
           '&' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::AmpersandEquals,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::Ampersand,
               }))
             };
@@ -242,50 +289,64 @@ impl Lexer {
           '(' => {
             return if Self::next_char_is(characters, ')') {
               Some(Token::Literal(LiteralToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 literal: Literal::Void,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::LeftParenthesis,
               }))
             };
           }
           ')' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::RightParenthesis,
             }))
           }
           '{' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::LeftCurlyBracket,
             }))
           }
           '}' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::RightCurlyBracket,
             }))
           }
           '<' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::LeftAngledBracket,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::LeftAngledBracketEquals,
               }))
             };
@@ -293,36 +354,46 @@ impl Lexer {
           '>' => {
             return if Self::next_char_is(characters, '=') {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::RightAngledBracket,
               }))
             } else {
               Some(Token::Symbol(SymbolToken {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: Position {
+                  line: characters.current_line(),
+                  column: characters.current_column(),
+                },
                 symbol: Symbol::RightAngledBracketEquals,
               }))
             };
           }
           '[' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::LeftSquareBracket,
             }))
           }
           ']' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::RightSquareBracket,
             }))
           }
           '\'' => {
             return Some(Token::Symbol(SymbolToken {
-              line: characters.current_line(),
-              column: characters.current_column(),
+              position: Position {
+                line: characters.current_line(),
+                column: characters.current_column(),
+              },
               symbol: Symbol::Apostrophe,
             }))
           }
@@ -340,8 +411,10 @@ impl Lexer {
                   characters.next().unwrap();
 
                   return Some(Token::Literal(LiteralToken {
-                    line: characters.current_line(),
-                    column: start_of_lexeme,
+                    position: Position {
+                      line: characters.current_line(),
+                      column: start_of_lexeme,
+                    },
                     literal: Literal::String { lexeme },
                   }));
                 }
@@ -349,9 +422,9 @@ impl Lexer {
             }
 
             return Some(Token::Invalid {
+              position: characters.current_position(),
               error: InterpreterError::UnterminatedString {
-                line: characters.current_line(),
-                column: characters.current_column(),
+                position: characters.current_position(),
               },
             });
           }
@@ -360,11 +433,11 @@ impl Lexer {
       }
       _ => {}
     }
-
+    
     Some(Token::Invalid {
+      position: characters.current_position(),
       error: InterpreterError::UnknownToken {
-        line: characters.current_line(),
-        column: characters.current_column(),
+        position: characters.current_position(),
         token: next_character.into(),
       },
     })

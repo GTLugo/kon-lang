@@ -1,19 +1,18 @@
 use enumflags2::BitFlags;
 use foxy_utils::types::handle::Handle;
-use tracing::debug;
 
 use super::{
+  error::{error_handler::ErrorHandler, InterpreterError},
   grammar::{
     expression::Expression,
     keyword::Keyword,
     literal::Literal,
     symbol::Symbol,
     syntax_tree::SyntaxTree,
-    token::{KeywordToken, LiteralToken, SymbolToken, Token, TokenDiscriminants},
+    token::{KeywordToken, LiteralToken, Position, SymbolToken, Token, TokenDiscriminants},
   },
   util::token_provider::{Next, TokenProvider},
 };
-use crate::error::{error_handler::ErrorHandler, InterpreterError};
 
 #[derive(Debug, PartialEq, Eq)]
 enum DelimiterType {
@@ -25,9 +24,8 @@ enum DelimiterType {
 
 #[derive(Debug, Eq)]
 struct Delimiter {
+  position: Position,
   delimiter: DelimiterType,
-  line: u32,
-  column: u32,
 }
 
 impl Delimiter {
@@ -40,12 +38,8 @@ impl Delimiter {
     }
   }
 
-  fn line(&self) -> u32 {
-    self.line
-  }
-
-  fn column(&self) -> u32 {
-    self.column
+  fn position(&self) -> &Position {
+    &self.position
   }
 }
 
@@ -84,8 +78,7 @@ impl TryFrom<Token> for Delimiter {
 
     Ok(Self {
       delimiter,
-      line: token.line(),
-      column: token.column(),
+      position: token.position().clone(),
     })
   }
 }
@@ -111,30 +104,28 @@ impl Parser {
     match next {
       Next::Token(t) => {
         self.error_handler.get_mut().push(InterpreterError::ParseError {
-          line: t.line(),
-          column: t.column(),
+          position: t.position().clone(),
           message: format!("Expected EOF but got `{}`", t),
         });
         SyntaxTree {
           root,
           eof: Token::EndOfFile {
-            line: t.line(),
-            column: t.column() + 1,
+            position: Position::new(t.position().line, t.position().column + 1),
           },
         }
       }
-      Next::EndOfFile { line, column } => SyntaxTree {
+      Next::EndOfFile { position } => SyntaxTree {
         root,
-        eof: Token::EndOfFile { line, column },
+        eof: Token::EndOfFile { position },
       },
-      Next::EndOfStream { line, column } => SyntaxTree {
+      Next::EndOfStream { position } => SyntaxTree {
         root,
-        eof: Token::EndOfFile { line, column },
+        eof: Token::EndOfFile { position },
       },
     }
   }
 
-  fn is_rogue_delimiter(&mut self, token: Next<&Token>) -> bool {
+  fn is_rogue_delimiter(&mut self, token: &Next<&Token>) -> bool {
     let Next::Token(token) = token.cloned() else {
       return false;
     };
@@ -149,15 +140,16 @@ impl Parser {
   fn match_token_types(&mut self, tokens: &mut TokenProvider, types: BitFlags<TokenDiscriminants>) -> Option<Token> {
     let mut peeked = tokens.peek();
     // check for rogue delimiters
-    if self.is_rogue_delimiter(peeked.clone()) {
-      let Next::Token(&Token::Symbol(SymbolToken { line, column, symbol })) = peeked else {
+    if self.is_rogue_delimiter(&peeked) {
+      let Next::Token(Token::Symbol(SymbolToken { position, symbol })) = &peeked else {
         return None;
       };
+
       self.error(InterpreterError::UnmatchedDelimiter {
-        line,
-        column,
+        position: position.clone(),
         delimiter: symbol.lexeme(),
       });
+
       tokens.next(); // consume the delimiter
       peeked = tokens.peek();
     }
@@ -288,12 +280,11 @@ impl Parser {
       Next::Token(token) => {
         match &token {
           Token::Literal(token) => return Expression::Literal { token: token.clone() },
-          Token::Symbol(SymbolToken { line, column, symbol }) => match symbol {
+          Token::Symbol(SymbolToken { position, symbol }) => match symbol {
             Symbol::LeftParenthesis => {
               self.delimiter_stack.push(Delimiter {
                 delimiter: DelimiterType::Paren,
-                line: *line,
-                column: *column,
+                position: position.clone(),
               });
               let operand = Box::new(self.expression(tokens));
               let _delimiter = self.pair_delimiter(tokens, Symbol::RightParenthesis);
@@ -302,8 +293,7 @@ impl Parser {
             Symbol::LeftCurlyBracket => {
               self.delimiter_stack.push(Delimiter {
                 delimiter: DelimiterType::Curly,
-                line: *line,
-                column: *column,
+                position: position.clone(),
               });
               let operand = Box::new(self.expression(tokens));
               let _delimiter = self.pair_delimiter(tokens, Symbol::RightCurlyBracket);
@@ -316,47 +306,41 @@ impl Parser {
         }
 
         self.error(InterpreterError::ParseError {
-          line: token.line(),
-          column: token.column(),
+          position: token.position().clone(),
           message: format!("Expected expression but got `{}`", tokens.previous_valid()),
         });
 
         Expression::Literal {
           token: LiteralToken {
-            line: token.line(),
-            column: token.column(),
+            position: token.position().clone(),
             literal: Literal::Void,
           },
         }
       }
-      Next::EndOfFile { line, column } => {
+      Next::EndOfFile { position } => {
         let prev = tokens.previous_valid();
         self.error(InterpreterError::ParseError {
-          line: prev.line(),
-          column: prev.column() + prev.lexeme().len() as u32,
+          position: Position::new(prev.position().line, prev.position().column + prev.lexeme().len() as u32),
           message: format!("Expected expression after `{}`", prev),
         });
-        
+
         Expression::Literal {
           token: LiteralToken {
-            line,
-            column,
+            position,
             literal: Literal::Void,
           },
         }
       }
-      Next::EndOfStream { line, column } => {
+      Next::EndOfStream { position } => {
         let prev = tokens.previous_valid();
         self.error(InterpreterError::ParseError {
-          line: prev.line(),
-          column: prev.column() + prev.lexeme().len() as u32,
+          position: Position::new(prev.position().line, prev.position().column + prev.lexeme().len() as u32),
           message: format!("Expected expression after `{}`", prev),
         });
-        
+
         Expression::Literal {
           token: LiteralToken {
-            line,
-            column,
+            position,
             literal: Literal::Void,
           },
         }
@@ -373,41 +357,35 @@ impl Parser {
             token
           } else {
             let delimiter = Token::Symbol(SymbolToken {
-              line: token.line(),
-              column: token.column(),
+              position: token.position().clone(),
               symbol: delimiter,
             });
             self.error(InterpreterError::UnmatchedDelimiter {
-              line: unmatched.line(),
-              column: unmatched.column(),
+              position: unmatched.position().clone(),
               delimiter: unmatched.lexeme(),
             });
             delimiter
           }
         }
-        Next::EndOfFile { line, column } | Next::EndOfStream { line, column } => {
+        Next::EndOfFile { position } | Next::EndOfStream { position } => {
           let delimiter = Token::Symbol(SymbolToken {
-            line,
-            column,
+            position,
             symbol: delimiter,
           });
           self.error(InterpreterError::UnmatchedDelimiter {
-            line: unmatched.line(),
-            column: unmatched.column(),
+            position: unmatched.position().clone(),
             delimiter: unmatched.lexeme(),
           });
           delimiter
         }
       },
-      Err((line, column)) => {
+      Err(position) => {
         let delimiter = Token::Symbol(SymbolToken {
-          line,
-          column,
+          position,
           symbol: delimiter,
         });
         self.error(InterpreterError::UnmatchedDelimiter {
-          line: unmatched.line(),
-          column: unmatched.column(),
+          position: unmatched.position().clone(),
           delimiter: unmatched.lexeme(),
         });
         delimiter
@@ -415,11 +393,11 @@ impl Parser {
     }
   }
 
-  fn check_delimiter(&mut self, tokens: &mut TokenProvider, delimiter: &Symbol) -> Result<bool, (u32, u32)> {
+  fn check_delimiter(&mut self, tokens: &mut TokenProvider, delimiter: &Symbol) -> Result<bool, Position> {
     match tokens.peek() {
       Next::Token(Token::Symbol(symbol_token)) => Ok(symbol_token.symbol == *delimiter),
-      Next::Token(token) => Err((token.line(), token.column())),
-      Next::EndOfFile { line, column } | Next::EndOfStream { line, column } => Err((line, column)),
+      Next::Token(token) => Err(token.position().to_owned()),
+      Next::EndOfFile { position } | Next::EndOfStream { position } => Err(position),
     }
   }
 

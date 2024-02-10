@@ -1,5 +1,7 @@
 use std::{iter::Peekable, str::Chars};
 
+use crate::interpreter::grammar::token::Position;
+
 pub struct CharacterProvider<'a> {
   chars: Peekable<Chars<'a>>,
   line: u32,
@@ -18,6 +20,13 @@ impl<'a> CharacterProvider<'a> {
   // pub fn current_location(&self) -> String {
   //     "NUL".into()
   // }
+
+  pub fn current_position(&self) -> Position {
+    Position {
+      line: self.line,
+      column: self.column,
+    }
+  }
 
   pub fn current_line(&self) -> u32 {
     self.line

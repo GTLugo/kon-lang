@@ -3,6 +3,8 @@ use std::{fmt::Debug, io};
 use strum::EnumDiscriminants;
 use thiserror::Error;
 
+use super::grammar::token::Position;
+
 pub mod error_handler;
 
 #[derive(Error, EnumDiscriminants)]
@@ -25,20 +27,20 @@ impl Debug for KonError {
 
 #[derive(Error, Debug, EnumDiscriminants, Clone, PartialEq, Eq)]
 pub enum InterpreterError {
-  #[error("Unknown token `{token}` ({line}, {column})")]
-  UnknownToken { line: u32, column: u32, token: String },
-  #[error("{message} ({line}, {column})")]
-  SyntaxError { line: u32, column: u32, message: String },
-  #[error("Unterminated string ({line}, {column})")]
-  UnterminatedString { line: u32, column: u32 },
-  #[error("{message} ({line}, {column})")]
-  ParseError { line: u32, column: u32, message: String },
-  #[error("{message} ({line}, {column})")]
-  EOFError { line: u32, column: u32, message: String },
-  #[error("Unmatched `{delimiter}` ({line}, {column})")]
-  UnmatchedDelimiter { line: u32, column: u32, delimiter: String },
-  #[error("Unknown operator `{operator}` ({line}, {column})")]
-  UnknownOperator { line: u32, column: u32, operator: String },
+  #[error("Unknown token `{token}` {position}")]
+  UnknownToken { position: Position, token: String },
+  #[error("{message} {position}")]
+  SyntaxError { position: Position, message: String },
+  #[error("Unterminated string {position}")]
+  UnterminatedString { position: Position },
+  #[error("{message} {position}")]
+  ParseError { position: Position, message: String },
+  #[error("{message} {position}")]
+  EOFError { position: Position, message: String },
+  #[error("Unmatched `{delimiter}` {position}")]
+  UnmatchedDelimiter { position: Position, delimiter: String },
+  #[error("Unknown operator `{operator}` {position}")]
+  UnknownOperator { position: Position, operator: String },
   #[error("{0}")]
   Other(String),
 }

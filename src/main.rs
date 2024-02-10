@@ -2,7 +2,7 @@ use std::{fs, io::Write};
 
 use clap::Parser;
 use foxy_utils::start_debug_logging_session;
-use kon::{error::KonError, interpreter::Interpreter};
+use kon::interpreter::{error::KonError, Interpreter};
 use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 
 use self::cli::Cli;

@@ -1,12 +1,13 @@
 use foxy_utils::types::handle::Handle;
 
 use self::{
-  grammar::{binding::binder::Binder, syntax_tree::SyntaxTree},
+  error::{error_handler::ErrorHandler, KonError},
+  grammar::binding::binder::Binder,
   lexer::Lexer,
   parser::Parser,
 };
-use crate::error::{error_handler::ErrorHandler, KonError};
 
+pub mod error;
 mod grammar;
 mod lexer;
 mod parser;

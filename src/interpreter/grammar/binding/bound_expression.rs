@@ -1,21 +1,24 @@
-use std::any::{type_name_of_val, Any, TypeId};
+use std::any::{Any, TypeId};
 
 use super::bound_operator::{BoundBinaryOperator, BoundUnaryOperator};
-use crate::error::InterpreterError;
+use crate::interpreter::{error::InterpreterError, grammar::token::Position};
 
 #[derive(Debug)]
 pub enum BoundExpression {
   Literal {
     data_type: TypeId,
+    position: Position,
     value: Box<dyn Any>,
   },
   Unary {
     data_type: TypeId,
+    position: Position,
     operator: BoundUnaryOperator,
     operand: Box<BoundExpression>,
   },
   Binary {
     data_type: TypeId,
+    position: Position,
     operator: BoundBinaryOperator,
     left_operand: Box<BoundExpression>,
     right_operand: Box<BoundExpression>,
@@ -38,23 +41,23 @@ impl BoundExpression {
 
   pub fn evaluate(&self) -> Result<Box<dyn Any>, InterpreterError> {
     match self {
-      BoundExpression::Literal { data_type, value } => {
-        if *data_type == TypeId::of::<i64>() {
-          let Some(&value) = value.downcast_ref::<i64>() else {
-            unreachable!()
-          };
-
-          return Ok(Box::new(value));
+      BoundExpression::Literal {
+        data_type,
+        position,
+        value,
+      } => {
+        if let Some(&integer) = value.downcast_ref::<i64>() {
+          return Ok(Box::new(integer));
         }
 
         Err(InterpreterError::SyntaxError {
-          line: 0,
-          column: 0,
+          position: position.to_owned(),
           message: "literals of this value not supported".to_string(),
         })
       }
       BoundExpression::Unary {
         data_type,
+        position,
         operator,
         operand,
       } => {
@@ -71,8 +74,7 @@ impl BoundExpression {
             }
 
             Err(InterpreterError::SyntaxError {
-              line: 0,
-              column: 0,
+              position: position.to_owned(),
               message: format!("cannot perform `{:?}` on value", operator),
             })
           }
@@ -86,8 +88,7 @@ impl BoundExpression {
             }
 
             Err(InterpreterError::SyntaxError {
-              line: 0,
-              column: 0,
+              position: position.to_owned(),
               message: format!("cannot perform `{:?}` on value", operator),
             })
           }
@@ -95,6 +96,7 @@ impl BoundExpression {
       }
       BoundExpression::Binary {
         data_type,
+        position,
         operator,
         left_operand,
         right_operand,
@@ -109,8 +111,7 @@ impl BoundExpression {
             }
 
             Err(InterpreterError::SyntaxError {
-              line: 0,
-              column: 0,
+              position: position.to_owned(),
               message: format!("cannot perform `{:?}` on value", operator),
             })
           }
@@ -120,8 +121,7 @@ impl BoundExpression {
             }
 
             Err(InterpreterError::SyntaxError {
-              line: 0,
-              column: 0,
+              position: position.to_owned(),
               message: format!("cannot perform `{:?}` on value", operator),
             })
           }
@@ -131,8 +131,7 @@ impl BoundExpression {
             }
 
             Err(InterpreterError::SyntaxError {
-              line: 0,
-              column: 0,
+              position: position.to_owned(),
               message: format!("cannot perform `{:?}` on value", operator),
             })
           }
@@ -142,8 +141,7 @@ impl BoundExpression {
             }
 
             Err(InterpreterError::SyntaxError {
-              line: 0,
-              column: 0,
+              position: position.to_owned(),
               message: format!("cannot perform `{:?}` on value", operator),
             })
           }
